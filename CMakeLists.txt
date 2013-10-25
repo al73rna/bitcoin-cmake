@@ -35,6 +35,11 @@ if(NOT ${OpenSSL_FOUND})
     message(FATAL_ERROR "Could not locate OpenSSL.")
 endif()
 
+# bitcoin-qt dependencies (4.4.3 arbitrarily set via docs):
+find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork)
+
+find_package(Protobuf) 
+
 # 
 # TODO: add cache options for things in configure.ac
 #
