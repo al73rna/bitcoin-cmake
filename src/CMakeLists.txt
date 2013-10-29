@@ -27,6 +27,9 @@ target_link_libraries(bitcoin leveldb
 add_executable(bitcoind bitcoind.cpp)
 target_link_libraries(bitcoind bitcoin)
 
+add_executable(bitcoin-cli bitcoin-cli.cpp)
+target_link_libraries(bitcoin-cli bitcoin)
+
 # TODO: conditional subdirectory
 add_subdirectory( qt )
 
