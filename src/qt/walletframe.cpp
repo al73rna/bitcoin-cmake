@@ -62,7 +62,7 @@ bool WalletFrame::setCurrentWallet(const QString& name)
 
     WalletView *walletView = mapWalletViews.value(name);
     walletStack->setCurrentWidget(walletView);
-    walletView->setEncryptionStatus();
+    walletView->updateEncryptionStatus();
     return true;
 }
 
@@ -113,13 +113,6 @@ void WalletFrame::gotoHistoryPage()
     QMap<QString, WalletView*>::const_iterator i;
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
         i.value()->gotoHistoryPage();
-}
-
-void WalletFrame::gotoAddressBookPage()
-{
-    QMap<QString, WalletView*>::const_iterator i;
-    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
-        i.value()->gotoAddressBookPage();
 }
 
 void WalletFrame::gotoReceiveCoinsPage()
@@ -178,9 +171,16 @@ void WalletFrame::unlockWallet()
         walletView->unlockWallet();
 }
 
-void WalletFrame::setEncryptionStatus()
+void WalletFrame::usedSendingAddresses()
 {
     WalletView *walletView = (WalletView*)walletStack->currentWidget();
     if (walletView)
-        walletView->setEncryptionStatus();
+        walletView->usedSendingAddresses();
+}
+
+void WalletFrame::usedReceivingAddresses()
+{
+    WalletView *walletView = (WalletView*)walletStack->currentWidget();
+    if (walletView)
+        walletView->usedReceivingAddresses();
 }

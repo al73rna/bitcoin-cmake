@@ -1750,12 +1750,12 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         const CTransaction &tx = block.vtx[i];
         uint256 hash = tx.GetHash();
 
-        // check that all outputs are available
-        if (!view.HaveCoins(hash)) {
-            fClean = fClean && error("DisconnectBlock() : outputs still spent? database corrupted");
-            view.SetCoins(hash, CCoins());
-        }
-        CCoins &outs = view.GetCoins(hash);
+        // Check that all outputs are available and match the outputs in the block itself
+        // exactly. Note that transactions with only provably unspendable outputs won't
+        // have outputs available even in the block itself, so we handle that case
+        // specially with outsEmpty.
+        CCoins outsEmpty;
+        CCoins &outs = view.HaveCoins(hash) ? view.GetCoins(hash) : outsEmpty;
         outs.ClearUnspendable();
 
         CCoins outsBlock = CCoins(tx, pindex->nHeight);
@@ -2355,7 +2355,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         uniqueTx.insert(block.GetTxHash(i));
     }
     if (uniqueTx.size() != block.vtx.size())
-        return state.DoS(100, error("CheckBlock() : duplicate transaction"));
+        return state.DoS(100, error("CheckBlock() : duplicate transaction"), true);
 
     unsigned int nSigOps = 0;
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
@@ -3783,7 +3783,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         LOCK(cs_main);
 
         CValidationState state;
-        if (ProcessBlock(state, pfrom, &block))
+        if (ProcessBlock(state, pfrom, &block) || state.CorruptionPossible())
             mapAlreadyAskedFor.erase(inv);
         int nDoS = 0;
         if (state.IsInvalid(nDoS))
@@ -3814,8 +3814,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             if ((pfrom->pfilter && pfrom->pfilter->IsRelevantAndUpdate(mempool.lookup(hash), hash)) ||
                (!pfrom->pfilter))
                 vInv.push_back(inv);
-            if (vInv.size() == MAX_INV_SZ)
-                break;
+            if (vInv.size() == MAX_INV_SZ) {
+                pfrom->PushMessage("inv", vInv);
+                vInv.clear();
+            }
         }
         if (vInv.size() > 0)
             pfrom->PushMessage("inv", vInv);
