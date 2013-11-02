@@ -48,7 +48,7 @@ signals:
     void reply(int category, const QString &command);
 };
 
-//#include "rpcconsole.moc"
+#include "rpcconsole.moc"
 
 /**
  * Split shell command line into a list of arguments. Aims to emulate \c bash and friends.

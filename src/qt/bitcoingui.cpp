@@ -22,9 +22,9 @@
 #include "wallet.h"
 #include "init.h"
 
-#ifdef Q_OS_MAC
-#include "macdockiconhandler.h"
-#endif
+//#ifdef Q_OS_MAC
+//#include "macdockiconhandler.h"
+//#endif
 
 #include <QApplication>
 #include <QMenuBar>

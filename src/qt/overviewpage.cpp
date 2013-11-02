@@ -89,7 +89,7 @@ public:
     int unit;
 
 };
-//#include "overviewpage.moc"
+#include "overviewpage.moc"
 
 OverviewPage::OverviewPage(QWidget *parent) :
     QWidget(parent),

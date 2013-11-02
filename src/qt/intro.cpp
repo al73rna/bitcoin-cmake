@@ -44,7 +44,7 @@ private:
     Intro *intro;
 };
 
-//#include "intro.moc"
+#include "intro.moc"
 
 FreespaceChecker::FreespaceChecker(Intro *intro)
 {

@@ -22,5 +22,10 @@ add_definitions( -DLEVELDB_PLATFORM_POSIX )
 	#	LEVELDB_PLATFORM_CHROMIUM
 	#       LEVELDB_PLATFORM_WINDOWS
 
+# TODO:
+#add_definitions(
+	#-DTARGET_OS=OS_WINDOWS_CROSSCOMPILE
+	#-DTARGET_OS=Darwin
+
 add_library(leveldb STATIC ${HEADERS} ${SOURCES})
 
