@@ -1,9 +1,81 @@
 
-file(GLOB HEADERS *.h)
-file(GLOB SOURCES *.cpp)
+set(LIB_HEADERS
+    addrman.h
+    alert.h
+    allocators.h
+    base58.h
+    bignum.h
+    bitcoinrpc.h
+    bloom.h
+    chainparams.h
+    checkpoints.h
+    checkqueue.h
+    clientversion.h
+    compat.h
+    core.h
+    crypter.h
+    db.h
+    hash.h
+    init.h
+    key.h
+    keystore.h
+    leveldb.h
+    limitedmap.h
+    main.h
+    miner.h
+    mruset.h
+    netbase.h
+    net.h
+    protocol.h
+    script.h
+    serialize.h
+    sync.h
+    threadsafety.h
+    txdb.h
+    ui_interface.h
+    uint256.h
+    util.h
+    version.h
+    walletdb.h
+    wallet.h
+    )
 
-# remove bitcoind main() from lib:
-list(REMOVE_ITEM SOURCES bitcoind.cpp)
+set(LIB_SOURCES
+    addrman.cpp
+    alert.cpp
+    allocators.cpp
+    bitcoinrpc.cpp
+    bloom.cpp
+    chainparams.cpp
+    checkpoints.cpp
+    core.cpp
+    crypter.cpp
+    db.cpp
+    hash.cpp
+    init.cpp
+    key.cpp
+    keystore.cpp
+    leveldb.cpp
+    main.cpp
+    miner.cpp
+    netbase.cpp
+    net.cpp
+    noui.cpp
+    protocol.cpp
+    rpcblockchain.cpp
+    rpcdump.cpp
+    rpcmining.cpp
+    rpcnet.cpp
+    rpcrawtransaction.cpp
+    rpcwallet.cpp
+    script.cpp
+    sync.cpp
+    txdb.cpp
+    util.cpp
+    version.cpp
+    wallet.cpp
+    walletdb.cpp
+    )
 
 add_subdirectory(leveldb)
 
@@ -16,7 +88,7 @@ include_directories(${BDB_INCLUDE}
                     "leveldb/helpers"
                     )
 
-add_library(bitcoin ${HEADERS} ${SOURCES})
+add_library(bitcoin ${LIB_HEADERS} ${LIB_SOURCES})
 target_link_libraries(bitcoin leveldb
                       ${CMAKE_THREAD_LIBS_INIT}
 		      ${BDB_LIBRARY}

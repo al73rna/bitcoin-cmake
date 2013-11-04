@@ -6,10 +6,11 @@ enable_testing()
 
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 8)
-set(BUILD_VERSION 5)
+set(RELEASE_VERSION 99)
+set(BUILD_VERSION 0)
 
 set(PACKAGE bitcoin)
-set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${BUILD_VERSION})
+set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
 set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
 set(COPYRIGHT "Copyright (c) 2009-2013 Bitcoin Developers.  All Rights Reserved.")
 set(prefix ${CMAKE_INSTALL_PREFIX})
@@ -21,7 +22,8 @@ INCLUDE(UsePkgConfig)
 find_package(Threads REQUIRED)
 find_package(BDB REQUIRED)
 
-find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options)
+find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options
+	                             unit_test_framework)
 if(NOT ${Boost_FOUND})
     message(FATAL_ERROR "Could not locate Boost.")
 endif()
