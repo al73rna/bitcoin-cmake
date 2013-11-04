@@ -34,3 +34,5 @@ if(BUILD_QT)
     add_subdirectory( qt )
 endif()
 
+add_subdirectory(test)
+
