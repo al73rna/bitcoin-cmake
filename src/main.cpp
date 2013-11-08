@@ -41,7 +41,6 @@ bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
-bool fHaveGUI = false;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 10000;  // Override with -mintxfee
@@ -3155,6 +3154,9 @@ void static ProcessGetData(CNode* pfrom)
 
             // Track requests for our stuff.
             g_signals.Inventory(inv.hash);
+            
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
+                break;
         }
     }
 
@@ -3841,7 +3843,10 @@ bool ProcessMessages(CNode* pfrom)
 
     if (!pfrom->vRecvGetData.empty())
         ProcessGetData(pfrom);
-
+    
+    // this maintains the order of responses
+    if (!pfrom->vRecvGetData.empty()) return fOk;
+    
     std::deque<CNetMessage>::iterator it = pfrom->vRecvMsg.begin();
     while (!pfrom->fDisconnect && it != pfrom->vRecvMsg.end()) {
         // Don't bother if send buffer is too full to respond anyway
@@ -3929,6 +3934,8 @@ bool ProcessMessages(CNode* pfrom)
 
         if (!fRet)
             LogPrintf("ProcessMessage(%s, %u bytes) FAILED\n", strCommand.c_str(), nMessageSize);
+        
+        break;
     }
 
     // In case the connection got shut down, its receive buffer was wiped
