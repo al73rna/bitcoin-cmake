@@ -32,6 +32,7 @@ set(LIB_HEADERS
     sync.h
     threadsafety.h
     txdb.h
+    txmempool.h
     ui_interface.h
     uint256.h
     util.h
@@ -71,6 +72,7 @@ set(LIB_SOURCES
     script.cpp
     sync.cpp
     txdb.cpp
+    txmempool.cpp
     util.cpp
     version.cpp
     wallet.cpp
