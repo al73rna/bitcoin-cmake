@@ -18,6 +18,10 @@ set(prefix ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 INCLUDE(UsePkgConfig)
 
+# This is probably a hack to get PRId64 defines from <inttypes.h> which 
+# doesn't seem to define them without manual intervention.
+add_definitions( "-D__STDC_FORMAT_MACROS" )
+
 # alert.cpp requires pthreads directly?
 find_package(Threads REQUIRED)
 find_package(BDB REQUIRED)
