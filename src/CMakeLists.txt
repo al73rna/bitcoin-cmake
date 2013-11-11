@@ -6,6 +6,7 @@ set(LIB_HEADERS
     base58.h
     bignum.h
     bitcoinrpc.h
+    coins.h
     bloom.h
     chainparams.h
     checkpoints.h
@@ -19,7 +20,7 @@ set(LIB_HEADERS
     init.h
     key.h
     keystore.h
-    leveldb.h
+    leveldbwrapper.h
     limitedmap.h
     main.h
     miner.h
@@ -49,6 +50,7 @@ set(LIB_SOURCES
     bloom.cpp
     chainparams.cpp
     checkpoints.cpp
+    coins.cpp
     core.cpp
     crypter.cpp
     db.cpp
@@ -56,7 +58,7 @@ set(LIB_SOURCES
     init.cpp
     key.cpp
     keystore.cpp
-    leveldb.cpp
+    leveldbwrapper.cpp
     main.cpp
     miner.cpp
     netbase.cpp
