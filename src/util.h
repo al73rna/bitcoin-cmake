@@ -27,8 +27,6 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#else
-typedef int pid_t; /* define for Windows compatibility */
 #endif
 
 #include <boost/filesystem/path.hpp>
@@ -46,26 +44,13 @@ static const int64_t CENT = 1000000;
 #define UEND(a)             ((unsigned char*)&((&(a))[1]))
 #define ARRAYLEN(array)     (sizeof(array)/sizeof((array)[0]))
 
-/* Format characters for (s)size_t and ptrdiff_t */
-#if defined(_MSC_VER) || defined(__MSVCRT__)
-  /* (s)size_t and ptrdiff_t have the same size specifier in MSVC:
-     http://msdn.microsoft.com/en-us/library/tcxf1dw6%28v=vs.100%29.aspx
-   */
-  #define PRIszx    "Ix"
-  #define PRIszu    "Iu"
-  #define PRIszd    "Id"
-  #define PRIpdx    "Ix"
-  #define PRIpdu    "Iu"
-  #define PRIpdd    "Id"
-#else /* C99 standard */
-  #define PRIszx    "zx"
-  #define PRIszu    "zu"
-  #define PRIszd    "zd"
-  #define PRIpdx    "tx"
-  #define PRIpdu    "tu"
-  #define PRIpdd    "td"
-#endif
-
+/* Format characters for (s)size_t and ptrdiff_t (C99 standard) */
+#define PRIszx    "zx"
+#define PRIszu    "zu"
+#define PRIszd    "zd"
+#define PRIpdx    "tx"
+#define PRIpdu    "tu"
+#define PRIpdd    "td"
 
 // This is needed because the foreach macro can't get over the comma in pair<t1, t2>
 #define PAIRTYPE(t1, t2)    std::pair<t1, t2>
@@ -109,7 +94,7 @@ inline void MilliSleep(int64_t n)
 #elif defined(HAVE_WORKING_BOOST_SLEEP)
     boost::this_thread::sleep(boost::posix_time::milliseconds(n));
 #else
-  //should never get here
+//should never get here
 #error missing boost sleep implementation
 #endif
 }
@@ -119,7 +104,7 @@ inline void MilliSleep(int64_t n)
  * Parameters count from 1.
  */
 #ifdef __GNUC__
-#define ATTR_WARN_PRINTF(X,Y) __attribute__((format(printf,X,Y)))
+#define ATTR_WARN_PRINTF(X,Y) __attribute__((format(gnu_printf,X,Y)))
 #else
 #define ATTR_WARN_PRINTF(X,Y)
 #endif

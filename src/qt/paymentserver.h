@@ -77,9 +77,6 @@ public:
     // Return certificate store
     static X509_STORE* getCertStore() { return certStore; }
 
-    // Setup networking
-    void initNetManager();
-
     // Constructor registers this on the parent QApplication to
     // receive QEvent::FileOpen events
     bool eventFilter(QObject *object, QEvent *event);
@@ -105,6 +102,9 @@ public slots:
     // Submit Payment message to a merchant, get back PaymentACK:
     void fetchPaymentACK(CWallet* wallet, SendCoinsRecipient recipient, QByteArray transaction);
 
+    // Handle an incoming URI or file
+    void handleURIOrFile(const QString& s);
+
 private slots:
     void handleURIConnection();
     void netRequestFinished(QNetworkReply*);
@@ -114,8 +114,10 @@ private slots:
 private:
     static bool readPaymentRequest(const QString& filename, PaymentRequestPlus& request);
     bool processPaymentRequest(PaymentRequestPlus& request, SendCoinsRecipient& recipient);
-    void handleURIOrFile(const QString& s);
     void fetchRequest(const QUrl& url);
+
+    // Setup networking
+    void initNetManager();
 
     bool saveURIs;                      // true during startup
     QLocalServer* uriServer;
