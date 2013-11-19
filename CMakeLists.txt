@@ -5,7 +5,7 @@ project(bitcoin)
 enable_testing()
 
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 8)
+set(MINOR_VERSION 9)
 set(RELEASE_VERSION 99)
 set(BUILD_VERSION 0)
 

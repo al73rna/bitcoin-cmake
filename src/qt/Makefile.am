@@ -11,28 +11,71 @@ SUBDIRS = $(BUILD_TEST_QT)
 DIST_SUBDIRS = test
 
 # bitcoin qt core #
-QT_TS = locale/bitcoin_ach.ts locale/bitcoin_af_ZA.ts locale/bitcoin_ar.ts \
-  locale/bitcoin_be_BY.ts locale/bitcoin_bg.ts locale/bitcoin_bs.ts \
-  locale/bitcoin_ca_ES.ts locale/bitcoin_ca.ts locale/bitcoin_cs.ts \
-  locale/bitcoin_cy.ts locale/bitcoin_da.ts locale/bitcoin_de.ts \
-  locale/bitcoin_el_GR.ts locale/bitcoin_en.ts locale/bitcoin_eo.ts \
-  locale/bitcoin_es_CL.ts locale/bitcoin_es.ts locale/bitcoin_et.ts \
-  locale/bitcoin_eu_ES.ts locale/bitcoin_fa_IR.ts locale/bitcoin_fa.ts \
-  locale/bitcoin_fi.ts locale/bitcoin_fr_CA.ts locale/bitcoin_fr.ts \
-  locale/bitcoin_gu_IN.ts locale/bitcoin_he.ts locale/bitcoin_hi_IN.ts \
-  locale/bitcoin_hr.ts locale/bitcoin_hu.ts locale/bitcoin_id_ID.ts \
-  locale/bitcoin_it.ts locale/bitcoin_ja.ts locale/bitcoin_kk_KZ.ts \
-  locale/bitcoin_ko_KR.ts locale/bitcoin_la.ts locale/bitcoin_lt.ts \
-  locale/bitcoin_lv_LV.ts locale/bitcoin_ms_MY.ts locale/bitcoin_nb.ts \
-  locale/bitcoin_nl.ts locale/bitcoin_pl.ts locale/bitcoin_pt_BR.ts \
-  locale/bitcoin_pt_PT.ts locale/bitcoin_ro_RO.ts locale/bitcoin_ru.ts \
-  locale/bitcoin_sk.ts locale/bitcoin_sq.ts locale/bitcoin_sr.ts \
-  locale/bitcoin_sv.ts locale/bitcoin_th_TH.ts locale/bitcoin_tr.ts \
-  locale/bitcoin_uk.ts locale/bitcoin_vi.ts locale/bitcoin_vi_VN.ts \
-  locale/bitcoin_zh_CN.ts locale/bitcoin_zh_TW.ts
+QT_TS = locale/bitcoin_ach.ts \
+  locale/bitcoin_af_ZA.ts \
+  locale/bitcoin_ar.ts \
+  locale/bitcoin_be_BY.ts \
+  locale/bitcoin_bg.ts \
+  locale/bitcoin_bs.ts \
+  locale/bitcoin_ca_ES.ts \
+  locale/bitcoin_ca.ts \
+  locale/bitcoin_cs.ts \
+  locale/bitcoin_cy.ts \
+  locale/bitcoin_da.ts \
+  locale/bitcoin_de.ts \
+  locale/bitcoin_de_AT.ts \
+  locale/bitcoin_el_GR.ts \
+  locale/bitcoin_en.ts \
+  locale/bitcoin_eo.ts \
+  locale/bitcoin_es_CL.ts \
+  locale/bitcoin_es.ts \
+  locale/bitcoin_et.ts \
+  locale/bitcoin_eu_ES.ts \
+  locale/bitcoin_fa_IR.ts \
+  locale/bitcoin_fa.ts \
+  locale/bitcoin_fi.ts \
+  locale/bitcoin_fr_CA.ts \
+  locale/bitcoin_fr.ts \
+  locale/bitcoin_gl.ts \
+  locale/bitcoin_gu_IN.ts \
+  locale/bitcoin_he.ts \
+  locale/bitcoin_hi_IN.ts \
+  locale/bitcoin_hr.ts \
+  locale/bitcoin_hu.ts \
+  locale/bitcoin_id_ID.ts \
+  locale/bitcoin_it.ts \
+  locale/bitcoin_ja.ts \
+  locale/bitcoin_kk_KZ.ts \
+  locale/bitcoin_ko_KR.ts \
+  locale/bitcoin_la.ts \
+  locale/bitcoin_lt.ts \
+  locale/bitcoin_lv_LV.ts \
+  locale/bitcoin_ms_MY.ts \
+  locale/bitcoin_nb.ts \
+  locale/bitcoin_nl.ts \
+  locale/bitcoin_pl.ts \
+  locale/bitcoin_pt_BR.ts \
+  locale/bitcoin_pt_PT.ts \
+  locale/bitcoin_ro_RO.ts \
+  locale/bitcoin_ru.ts \
+  locale/bitcoin_sk.ts \
+  locale/bitcoin_sl_SI.ts \
+  locale/bitcoin_sq.ts \
+  locale/bitcoin_sr.ts \
+  locale/bitcoin_sv.ts \
+  locale/bitcoin_th_TH.ts \
+  locale/bitcoin_tr.ts \
+  locale/bitcoin_uk.ts \
+  locale/bitcoin_vi.ts \
+  locale/bitcoin_vi_VN.ts \
+  locale/bitcoin_zh_CN.ts \
+  locale/bitcoin_zh_TW.ts
 
 QT_FORMS_UI = forms/aboutdialog.ui forms/addressbookpage.ui \
-  forms/askpassphrasedialog.ui forms/editaddressdialog.ui forms/intro.ui \
+  forms/askpassphrasedialog.ui \
+  forms/coincontroldialog.ui \
+  forms/editaddressdialog.ui \
+  forms/intro.ui \
   forms/openuridialog.ui \
   forms/optionsdialog.ui forms/overviewpage.ui forms/receiverequestdialog.ui \
   forms/receivecoinsdialog.ui \
@@ -43,6 +86,8 @@ QT_MOC_CPP = moc_aboutdialog.cpp moc_addressbookpage.cpp \
   moc_addresstablemodel.cpp moc_askpassphrasedialog.cpp \
   moc_bitcoinaddressvalidator.cpp moc_bitcoinamountfield.cpp \
   moc_bitcoingui.cpp moc_bitcoinunits.cpp moc_clientmodel.cpp \
+  moc_coincontroldialog.cpp \
+  moc_coincontroltreewidget.cpp \
   moc_csvmodelwriter.cpp moc_editaddressdialog.cpp moc_guiutil.cpp \
   moc_intro.cpp moc_macdockiconhandler.cpp moc_macnotificationhandler.cpp \
   moc_monitoreddatamapper.cpp moc_notificator.cpp \
@@ -70,7 +115,7 @@ PROTOBUF_PROTO = paymentrequest.proto
 
 BITCOIN_QT_H  = aboutdialog.h addressbookpage.h addresstablemodel.h \
   askpassphrasedialog.h bitcoinaddressvalidator.h bitcoinamountfield.h \
-  bitcoingui.h bitcoinunits.h clientmodel.h csvmodelwriter.h \
+  bitcoingui.h bitcoinunits.h clientmodel.h coincontroldialog.h coincontroltreewidget.h csvmodelwriter.h \
   editaddressdialog.h guiconstants.h guiutil.h intro.h macdockiconhandler.h \
   macnotificationhandler.h monitoreddatamapper.h notificator.h \
   openuridialog.h \
@@ -103,7 +148,10 @@ RES_ICONS = res/icons/bitcoin.png res/icons/address-book.png \
 BITCOIN_QT_CPP = aboutdialog.cpp addressbookpage.cpp \
   addresstablemodel.cpp askpassphrasedialog.cpp bitcoinaddressvalidator.cpp \
   bitcoinamountfield.cpp bitcoin.cpp bitcoingui.cpp \
-  bitcoinunits.cpp clientmodel.cpp csvmodelwriter.cpp editaddressdialog.cpp \
+  bitcoinunits.cpp clientmodel.cpp \
+  coincontroldialog.cpp \
+  coincontroltreewidget.cpp \
+  csvmodelwriter.cpp editaddressdialog.cpp \
   guiutil.cpp intro.cpp monitoreddatamapper.cpp notificator.cpp \
   openuridialog.cpp \
   optionsdialog.cpp optionsmodel.cpp overviewpage.cpp paymentrequestplus.cpp \
