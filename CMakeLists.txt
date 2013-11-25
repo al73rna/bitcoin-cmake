@@ -46,7 +46,7 @@ find_package(BDB REQUIRED)
 
 find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options
 	                             unit_test_framework)
-if(NOT ${Boost_FOUND})
+if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not locate Boost.")
 endif()
 set(Boost_USE_STATIC_LIBS OFF) 
@@ -54,20 +54,30 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
 find_package(OpenSSL)
-if(NOT ${OpenSSL_FOUND})
+if(NOT OPENSSL_FOUND)
     message(FATAL_ERROR "Could not locate OpenSSL.")
 endif()
 
 # bitcoin-qt dependencies (4.4.3 arbitrarily set via docs):
 find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork)
+find_package(Protobuf)
 
-# TODO only required for bitcoin-qt:
-find_package(Protobuf REQUIRED)
+if(QT_FOUND AND PROTOBUF_FOUND)
+    set(HAVE_BITCOINQT_DEPS TRUE)
+else()
+    set(HAVE_BITCOINQT_DEPS FALSE)
+endif()
 
-# 
-# TODO: add cache options for things in configure.ac
-#
-option(BUILD_QT "Enable QT (default is yes)" ON)
+option(BUILD_QT "Enable bitcoin-qt GUI (default is yes if deps are satisfied)" ${HAVE_BITCOINQT_DEPS})
+if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
+    message(FATAL_ERROR "BUILD_QT was requested but there are unmet dependencies:")
+    if(NOT QT_FOUND)
+        message(FATAL_ERROR " * Qt Libraries unsatisfied (QtCore QtGui QtNetwork).")
+    endif()
+    if(NOT PROTOBUF_FOUND)
+        message(FATAL_ERROR " * Protobuf library not found.")
+    endif()
+endif()
 
 find_package(Miniupnpc)
 option(USE_UPNP "UPNP support available or not." ${MINIUPNP_FOUND})
@@ -85,6 +95,10 @@ else()
     set(UPNP_SETTING "0")
 endif()
 
+# 
+# TODO: add cache options for things in configure.ac
+#
+
 #
 #dnl enable ipv6 support
 #AC_ARG_ENABLE([ipv6],
@@ -93,10 +107,6 @@ endif()
 #  [use_ipv6=$enableval],
 #  [use_ipv6=yes])
 #
-#AC_ARG_ENABLE(tests,
-#    AS_HELP_STRING([--enable-tests],[compile tests (default is yes)]),
-#    [use_tests=$enableval],
-#    [use_tests=yes])
 #
 #AC_ARG_WITH([comparison-tool],
 #    AS_HELP_STRING([--with-comparison-tool],[path to java comparison tool (requires --enable-tests)]),
@@ -194,6 +204,7 @@ endif()
 #  fi
 #fi
 
+option(ENABLE_TESTS "Compile and enable unit tests." TRUE)
 
 add_subdirectory(src)
 
