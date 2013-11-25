@@ -13,12 +13,15 @@ set(LIB_HEADERS
     bitcoinunits.h
     clientmodel.h
     csvmodelwriter.h
+    coincontroldialog.h
+    coincontroltreewidget.h
     editaddressdialog.h
     guiconstants.h
     guiutil.h
     intro.h
     monitoreddatamapper.h
     notificator.h
+    openuridialog.h
     optionsdialog.h
     optionsmodel.h
     overviewpage.h
@@ -58,11 +61,14 @@ set(LIB_SOURCES
     bitcoinunits.cpp
     clientmodel.cpp
     csvmodelwriter.cpp
+    coincontroldialog.cpp
+    coincontroltreewidget.cpp
     editaddressdialog.cpp
     guiutil.cpp
     intro.cpp
     monitoreddatamapper.cpp
     notificator.cpp
+    openuridialog.cpp
     optionsdialog.cpp
     optionsmodel.cpp
     overviewpage.cpp

@@ -12,6 +12,7 @@ set(LIB_HEADERS
     checkpoints.h
     checkqueue.h
     clientversion.h
+    coincontrol.h
     compat.h
     core.h
     crypter.h
@@ -85,7 +86,13 @@ add_subdirectory(leveldb)
 
 add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
 
-include_directories(${BDB_INCLUDE}
+# Generate bitcoin-config.h substituting config vars for include:
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/bitcoin-config.h @ONLY)
+add_definitions( "-DHAVE_CONFIG_H" )
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
+	            ${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
                     ${OPENSSL_INCLUDE_DIRS}
                     "leveldb/include"
@@ -99,6 +106,11 @@ target_link_libraries(bitcoin leveldb
                       ${Boost_LIBRARIES}
 		      ${OPENSSL_LIBRARIES}
 		      )
+
+if(USE_UPNP)
+    include_directories(${MINIUPNP_INCLUDE_DIR})
+    target_link_libraries(bitcoin ${MINIUPNP_LIBRARY})
+endif()
 
 add_executable(bitcoind bitcoind.cpp)
 target_link_libraries(bitcoind bitcoin)

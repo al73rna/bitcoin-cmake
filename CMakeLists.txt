@@ -9,10 +9,28 @@ set(MINOR_VERSION 9)
 set(RELEASE_VERSION 99)
 set(BUILD_VERSION 0)
 
+# Repeat for bitcoin-config.h
+set(CLIENT_VERSION_MAJOR ${MAJOR_VERSION})
+set(CLIENT_VERSION_MINOR ${MINOR_VERSION})
+set(CLIENT_VERSION_RELEASE ${RELEASE_VERSION})
+set(CLIENT_VERSION_REVISION ${RELEASE_VERSION}) # src/version.h expects this.
+set(CLIENT_VERSION_BUILD ${BUILD_VERSION})
+
+set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
+if(CLIENT_VERSION_IS_RELEASE)
+    # I don't want to modify source files to make this cleaner, so I'm
+    # explicitly defining to zero or one.
+    # See 'src/bitcoin-config.h.in' for usage.
+    set(CLIENT_VERSION_IS_RELEASE_SETTING 1)
+else()
+    set(CLIENT_VERSION_IS_RELEASE_SETTING 0)
+endif()
+
 set(PACKAGE bitcoin)
 set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
 set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
-set(COPYRIGHT "Copyright (c) 2009-2013 Bitcoin Developers.  All Rights Reserved.")
+set(COPYRIGHT_YEAR "2013")
+set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
 set(prefix ${CMAKE_INSTALL_PREFIX})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -50,6 +68,132 @@ find_package(Protobuf REQUIRED)
 # TODO: add cache options for things in configure.ac
 #
 option(BUILD_QT "Enable QT (default is yes)" ON)
+
+find_package(Miniupnpc)
+option(USE_UPNP "UPNP support available or not." ${MINIUPNP_FOUND})
+option(USE_UPNP_DEFAULT "Whether UPNP is enabled on startup (default is yes if libminiupnpc is found)" ${MINIUPNP_FOUND})
+if(USE_UPNP AND NOT MINIUPNP_FOUND)
+    message(FATAL_ERROR "UPNP Requested but miniupnpc library not found.")
+endif()
+if(USE_UPNP_DEFAULT AND NOT USE_UPNP)
+    message(STATUS "Implicitly disabling USE_UPNP_DEFAULT due to USE_UPNP not being enabled.")
+    set(USE_UPNP_DEFAULT OFF)
+endif()
+if(USE_UPNP_DEFAULT)
+    set(UPNP_SETTING "1") # turn on UPNP by default on bitcoin startup
+else()
+    set(UPNP_SETTING "0")
+endif()
+
+#
+#dnl enable ipv6 support
+#AC_ARG_ENABLE([ipv6],
+#  [AS_HELP_STRING([--enable-ipv6],
+#  [enable ipv6 (default is yes)])],
+#  [use_ipv6=$enableval],
+#  [use_ipv6=yes])
+#
+#AC_ARG_ENABLE(tests,
+#    AS_HELP_STRING([--enable-tests],[compile tests (default is yes)]),
+#    [use_tests=$enableval],
+#    [use_tests=yes])
+#
+#AC_ARG_WITH([comparison-tool],
+#    AS_HELP_STRING([--with-comparison-tool],[path to java comparison tool (requires --enable-tests)]),
+#    [use_comparison_tool=$withval],
+#    [use_comparison_tool=no])
+#
+#AC_ARG_ENABLE([comparison-tool-reorg-tests],
+#    AS_HELP_STRING([--enable-comparison-tool-reorg-tests],[enable expensive reorg tests in the comparison tool (default no)]),
+#    [use_comparison_tool_reorg_tests=$enableval],
+#    [use_comparison_tool_reorg_tests=no])
+#
+#AC_ARG_WITH([qrencode],
+#  [AS_HELP_STRING([--with-qrencode],
+#  [enable QR code support (default is yes if qt is enabled and libqrencode is found)])],
+#  [use_qr=$withval],
+#  [use_qr=auto])
+#
+#AC_ARG_WITH([qtdbus],
+#  [AS_HELP_STRING([--with-qtdbus],
+#  [enable DBus support (default is yes if qt is enabled and QtDBus is found)])],
+#  [use_dbus=$withval],
+#  [use_dbus=auto])
+#
+#AC_ARG_ENABLE([hardening],
+#  [AS_HELP_STRING([--enable-hardening],
+#  [attempt to harden the resulting executables (default is yes)])],
+#  [use_hardening=$enableval],
+#  [use_hardening=yes])
+
+#AC_ARG_ENABLE([ccache],
+#  [AS_HELP_STRING([--enable-ccache],
+#  [enable building with ccache (default is yes if ccache is found)])],
+#  [use_ccache=$enableval],
+#  [use_ccache=auto])
+
+#AC_ARG_ENABLE([lcov],
+#  [AS_HELP_STRING([--enable-lcov],
+#  [enable lcov testing (default is no)])],
+#  [use_lcov=yes],
+#  [use_lcov=no])
+
+########################3
+
+# large-address-aware
+#  LDFLAGS += -Wl,--large-address-aware
+
+# hardening:
+#  HARDENED_CXXFLAGS += -Wstack-protector -fPIE
+#  HARDENED_CPPFLAGS += -D_FORTIFY_SOURCE=2
+#  HARDENED_LDFLAGS += -Wl,--dynamicbase -Wl,--nxcompat 
+#  LDFLAGS += -Wl,-z,relro -Wl,-z,now
+# if not windows:
+#  HARDENED_CXXFLAGS += -fno-stack-protector -fstack-protector-all
+#  -pie will link successfully with MinGW, but it's unsupported and leads to undeterministic binaries
+#  HARDENED_LDFAGS += -pie
+
+# TODO:
+# this flag screws up non-darwin gcc even when the check fails. special-case it.
+#if test x$TARGET_OS = xdarwin; then
+#  AX_CHECK_LINK_FLAG([[-Wl,-dead_strip]], [LDFLAGS="$LDFLAGS -Wl,-dead_strip"])
+#fi
+
+#dnl these are only used when qt is enabled
+#if test x$use_qt = xyes; then
+#
+#  dnl enable dbus support
+#  AC_MSG_CHECKING([if dbus should be enabled])
+#  if test x$use_dbus != xno; then
+#    use_dbus=yes
+#    AC_DEFINE([USE_DBUS],[1],[Define if dbus support should be compiled in])
+#  else
+#    use_dbus=no
+#  fi
+#  AC_MSG_RESULT($use_dbus)
+#
+#  dnl enable qr support
+#  AC_MSG_CHECKING([if qr should be enabled])
+#  if test x$have_qrencode = xno; then
+#    if test x$use_qr == xyes; then
+#     AC_MSG_ERROR("QR support requested but cannot be built. use --without-qrencode")
+#    fi
+#    AC_MSG_RESULT(no)
+#  else
+#    if test x$use_qr != xno; then
+#      AC_MSG_RESULT(yes)
+#      AC_DEFINE([USE_QRCODE],[1],[Define if QR support should be compiled in])
+#      use_qr=yes
+#    else
+#      AC_MSG_RESULT(no)
+#    fi
+#  fi
+#
+#  if test x$use_tests$have_qt_test = xyesyes; then
+#    BUILD_TEST_QT="test"
+#  fi
+#fi
+
 
 add_subdirectory(src)
 
