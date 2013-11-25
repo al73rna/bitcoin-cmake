@@ -19,7 +19,6 @@
 
 #include <inttypes.h>
 #include <sstream>
-#include <stdint.h>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
@@ -553,7 +552,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
                          REJECT_INVALID, "vout empty");
     // Size limits
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
-        return state.DoS(100, error("CTransaction::CheckTransaction() : size limits failed"),
+        return state.DoS(100, error("CheckTransaction() : size limits failed"),
                          REJECT_INVALID, "oversize");
 
     // Check for negative or overflow output values
@@ -568,7 +567,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
                              REJECT_INVALID, "vout too large");
         nValueOut += txout.nValue;
         if (!MoneyRange(nValueOut))
-            return state.DoS(100, error("CTransaction::CheckTransaction() : txout total out of range"),
+            return state.DoS(100, error("CheckTransaction() : txout total out of range"),
                              REJECT_INVALID, "txout total too large");
     }
 
@@ -577,7 +576,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
     BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         if (vInOutPoints.count(txin.prevout))
-            return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"),
+            return state.DoS(100, error("CheckTransaction() : duplicate inputs"),
                              REJECT_INVALID, "duplicate inputs");
         vInOutPoints.insert(txin.prevout);
     }
