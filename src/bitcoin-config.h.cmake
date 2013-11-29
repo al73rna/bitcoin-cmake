@@ -1,0 +1,22 @@
+
+#define CLIENT_VERSION_MAJOR @CLIENT_VERSION_MAJOR@
+#define CLIENT_VERSION_MINOR @CLIENT_VERSION_MINOR@
+#define CLIENT_VERSION_RELEASE @CLIENT_VERSION_RELEASE@
+#define CLIENT_VERSION_REVISION @CLIENT_VERSION_RELEASE@
+#define CLIENT_VERSION_BUILD @CLIENT_VERSION_BUILD@
+#define COPYRIGHT_YEAR @COPYRIGHT_YEAR@
+
+#define CLIENT_VERSION_IS_RELEASE @CLIENT_VERSION_IS_RELEASE_SETTING@
+
+#cmakedefine MSG_NOSIGNAL
+#cmakedefine HAVE_MSG_NOSIGNAL
+
+// USE_UPNP is defined whenever UPNP should be compiled 
+// and linked with. The value assigned is 1 if UPNP should 
+// be enabled during bitcoin startup and 0 if not.
+#cmakedefine USE_UPNP @UPNP_SETTING@
+
+#define USE_IPV6 @USE_IPV6@
+
+#define USE_QRENCODE @USE_QRENCODE@
+

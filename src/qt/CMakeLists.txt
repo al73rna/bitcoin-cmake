@@ -143,6 +143,11 @@ target_link_libraries(bitcoinqt bitcoin leveldb
 		      ${OPENSSL_LIBRARIES}
 		      )
 
+if(USE_QRENCODE)
+    include_directories(${QRENCODE_INCLUDE_DIR})
+    target_link_libraries(bitcoinqt ${QRENCODE_LIBRARY})
+endif()
+
 # Cause src/qt/locale to be processed into .qm files
 add_dependencies(bitcoinqt bitcoin_translations)
 

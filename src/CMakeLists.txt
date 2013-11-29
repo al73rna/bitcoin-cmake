@@ -87,7 +87,7 @@ add_subdirectory(leveldb)
 add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
 
 # Generate bitcoin-config.h substituting config vars for include:
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-config.h.in
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-config.h.cmake
                ${CMAKE_CURRENT_BINARY_DIR}/bitcoin-config.h @ONLY)
 add_definitions( "-DHAVE_CONFIG_H" )
 

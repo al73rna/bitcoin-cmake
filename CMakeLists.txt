@@ -72,7 +72,7 @@ option(BUILD_QT "Enable bitcoin-qt GUI (default is yes if deps are satisfied)" $
 if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
     message(FATAL_ERROR "BUILD_QT was requested but there are unmet dependencies:")
     if(NOT QT_FOUND)
-        message(FATAL_ERROR " * Qt Libraries unsatisfied (QtCore QtGui QtNetwork).")
+        message(FATAL_ERROR " * Qt libraries unsatisfied (QtCore QtGui QtNetwork).")
     endif()
     if(NOT PROTOBUF_FOUND)
         message(FATAL_ERROR " * Protobuf library not found.")
@@ -80,8 +80,8 @@ if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
 endif()
 
 find_package(Miniupnpc)
-option(USE_UPNP "UPNP support available or not." ${MINIUPNP_FOUND})
-option(USE_UPNP_DEFAULT "Whether UPNP is enabled on startup (default is yes if libminiupnpc is found)" ${MINIUPNP_FOUND})
+option(USE_UPNP "Whether UPnP support should be available or not." ${MINIUPNP_FOUND})
+option(USE_UPNP_DEFAULT "Whether UPnP is enabled on startup (default is yes if libminiupnpc is found)" ${MINIUPNP_FOUND})
 if(USE_UPNP AND NOT MINIUPNP_FOUND)
     message(FATAL_ERROR "UPNP Requested but miniupnpc library not found.")
 endif()
@@ -95,17 +95,48 @@ else()
     set(UPNP_SETTING "0")
 endif()
 
+# Check if struct sockaddr_in6 contains sin6
+include(CheckStructHasMember)
+CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
+
+option(ENABLE_IPV6 "Enable use of IPv6. (default is yes if supported)" ${HAVE_IPV6})
+if(ENABLE_IPV6 AND NOT HAVE_IPV6)
+    message(FATAL_ERROR "USE_IPV6 requested but unable to find development support.")
+endif()
+if(ENABLE_IPV6)
+    set(USE_IPV6 1)
+else()
+    set(USE_IPV6 0)
+endif()
+
+find_package(QRencode)
+if(BUILD_QT AND QRENCODE_FOUND)
+    set(QRENCODE_DEPS_FOUND TRUE)
+else()
+    set(QRENCODE_DEPS_FOUND FALSE)
+endif()
+option(ENABLE_QRENCODE "Enable QR code support (default is yes if qt is enabled and libqrencode is found)" ${QRENCODE_DEPS_FOUND})
+if(ENABLE_QRENCODE AND NOT QRENCODE_DEPS_FOUND)
+    message(FATAL_ERROR "ENABLE_QRENCODE requested but unable to find qt or libqrencode dependencies.")
+endif()
+if(ENABLE_QRENCODE)
+    set(USE_QRENCODE 1)
+else()
+    set(USE_QRENCODE 0)
+endif()
+
+
+#AC_ARG_WITH([qrencode],
+#  [AS_HELP_STRING([--with-qrencode],
+#  [enable QR code support (default is yes if qt is enabled and libqrencode is found)])],
+#  [use_qr=$withval],
+#  [use_qr=auto])
+#PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes],	[have_qrencode=no])
+
 # 
 # TODO: add cache options for things in configure.ac
 #
 
-#
-#dnl enable ipv6 support
-#AC_ARG_ENABLE([ipv6],
-#  [AS_HELP_STRING([--enable-ipv6],
-#  [enable ipv6 (default is yes)])],
-#  [use_ipv6=$enableval],
-#  [use_ipv6=yes])
 #
 #
 #AC_ARG_WITH([comparison-tool],
@@ -113,16 +144,10 @@ endif()
 #    [use_comparison_tool=$withval],
 #    [use_comparison_tool=no])
 #
-#AC_ARG_ENABLE([comparison-tool-reorg-tests],
-#    AS_HELP_STRING([--enable-comparison-tool-reorg-tests],[enable expensive reorg tests in the comparison tool (default no)]),
+#AC_ARG_ENABLE([comparison-tool-reorg-tests], #    AS_HELP_STRING([--enable-comparison-tool-reorg-tests],[enable expensive reorg tests in the comparison tool (default no)]),
 #    [use_comparison_tool_reorg_tests=$enableval],
 #    [use_comparison_tool_reorg_tests=no])
 #
-#AC_ARG_WITH([qrencode],
-#  [AS_HELP_STRING([--with-qrencode],
-#  [enable QR code support (default is yes if qt is enabled and libqrencode is found)])],
-#  [use_qr=$withval],
-#  [use_qr=auto])
 #
 #AC_ARG_WITH([qtdbus],
 #  [AS_HELP_STRING([--with-qtdbus],
