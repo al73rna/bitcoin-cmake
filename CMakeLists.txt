@@ -130,11 +130,65 @@ if(USE_DBUS)
     endif()
 endif()
 
-# 
-# TODO: add cache options for things in configure.ac
-#
+# missing AX_CHECK_LINK_FLAG() from autoconf.. so workaround:
+include(CheckCCompilerFlag)
 
-#
+if(MINGW)
+    # Allow windows builds to handle addresses larger than 2GB.
+    set(CMAKE_REQUIRED_FLAGS "-Wl,--large-address-aware")
+    CHECK_C_COMPILER_FLAG("" LINK_LARGE_ADDRESS_AWARE)
+    if(LINK_LARGE_ADDRESS_AWARE)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--large-address-aware")
+    endif()
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # This flag screws up non-darwin gcc even when the check fails. special-case it.
+    set(CMAKE_REQUIRED_FLAGS "-Wl,-dead_strip")
+    CHECK_C_COMPILER_FLAG("" LINK_DEAD_STRIP)
+    if(LINK_DEAD_STRIP)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-dead_strip")
+    endif()
+endif()
+
+if(UNIX)
+    option(ENABLE_HARDENING "Attempt to harden the resulting executables (default is yes)" ON)
+    set(HARDENED_CXXFLAGS "-Wstack-protector -fPIE" CACHE STRING "")
+    set(HARDENED_CPPFLAGS "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2" CACHE STRING "")
+    set(HARDENED_LDFLAGS "-Wl,-z,relro" CACHE STRING "")
+    set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -Wl,-z,now" CACHE STRING "")
+
+    set(CMAKE_REQUIRED_FLAGS "-Wl,--dynamicbase")
+    CHECK_C_COMPILER_FLAG("" LINK_DYNAMIC_BASE)
+    if(LINK_DYNAMIC_BASE)
+        set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -Wl,--dynamicbase" CACHE STRING "")
+    endif()
+
+    set(CMAKE_REQUIRED_FLAGS "-Wl,--nxcompat")
+    CHECK_C_COMPILER_FLAG("" LINK_NX_COMPAT)
+    if(LINK_NX_COMPAT)
+        set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -Wl,--nxcompat" CACHE STRING "")
+    endif()
+
+    if(NOT MINGW)
+        # -fstack-protector-all can produce broken binaries with mingw
+	set(HARDENED_CXXFLAGS "${HARDENED_CXXFLAGS} -fno-stack-protector" CACHE STRING "")
+	set(HARDENED_CXXFLAGS "${HARDENED_CXXFLAGS} -fstack-protector-all" CACHE STRING "")
+        #  -pie will link successfully with MinGW, but it's unsupported 
+	#  and leads to undeterministic binaries
+	set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -pie" CACHE STRING "")
+    endif()
+    MARK_AS_ADVANCED(HARDENED_CXXFLAGS HARDENED_CPPFLAGS HARDENED_LDFLAGS)
+
+    if(ENABLE_HARDENING)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HARDENED_CXXFLAGS} ${HARDENED_CPPFLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${HARDENED_LDFLAGS}")
+    endif()
+endif()
+
+
+# 
+# TODO: add rest of options for things in configure.ac
 #
 #AC_ARG_WITH([comparison-tool],
 #    AS_HELP_STRING([--with-comparison-tool],[path to java comparison tool (requires --enable-tests)]),
@@ -145,13 +199,6 @@ endif()
 #    [use_comparison_tool_reorg_tests=$enableval],
 #    [use_comparison_tool_reorg_tests=no])
 #
-#
-#AC_ARG_ENABLE([hardening],
-#  [AS_HELP_STRING([--enable-hardening],
-#  [attempt to harden the resulting executables (default is yes)])],
-#  [use_hardening=$enableval],
-#  [use_hardening=yes])
-
 #AC_ARG_ENABLE([ccache],
 #  [AS_HELP_STRING([--enable-ccache],
 #  [enable building with ccache (default is yes if ccache is found)])],
@@ -164,26 +211,8 @@ endif()
 #  [use_lcov=yes],
 #  [use_lcov=no])
 
-########################3
 
-# large-address-aware
-#  LDFLAGS += -Wl,--large-address-aware
-
-# hardening:
-#  HARDENED_CXXFLAGS += -Wstack-protector -fPIE
-#  HARDENED_CPPFLAGS += -D_FORTIFY_SOURCE=2
-#  HARDENED_LDFLAGS += -Wl,--dynamicbase -Wl,--nxcompat 
-#  LDFLAGS += -Wl,-z,relro -Wl,-z,now
-# if not windows:
-#  HARDENED_CXXFLAGS += -fno-stack-protector -fstack-protector-all
-#  -pie will link successfully with MinGW, but it's unsupported and leads to undeterministic binaries
-#  HARDENED_LDFAGS += -pie
-
-# TODO:
-# this flag screws up non-darwin gcc even when the check fails. special-case it.
-#if test x$TARGET_OS = xdarwin; then
-#  AX_CHECK_LINK_FLAG([[-Wl,-dead_strip]], [LDFLAGS="$LDFLAGS -Wl,-dead_strip"])
-#fi
+option(ENABLE_TESTS "Compile and enable unit tests." TRUE)
 
 #dnl these are only used when qt is enabled
 #if test x$use_qt = xyes; then
@@ -192,8 +221,6 @@ endif()
 #    BUILD_TEST_QT="test"
 #  fi
 #fi
-
-option(ENABLE_TESTS "Compile and enable unit tests." TRUE)
 
 add_subdirectory(src)
 
@@ -206,5 +233,4 @@ if(DOXYGEN_FOUND)
 		      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		      COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
 endif()
-
 
