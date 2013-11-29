@@ -5,7 +5,6 @@ set(LIB_HEADERS
     allocators.h
     base58.h
     bignum.h
-    bitcoinrpc.h
     coins.h
     bloom.h
     chainparams.h
@@ -29,6 +28,9 @@ set(LIB_HEADERS
     netbase.h
     net.h
     protocol.h
+    rpcclient.h
+    rpcprotocol.h
+    rpcserver.h
     script.h
     serialize.h
     sync.h
@@ -47,7 +49,6 @@ set(LIB_SOURCES
     addrman.cpp
     alert.cpp
     allocators.cpp
-    bitcoinrpc.cpp
     bloom.cpp
     chainparams.cpp
     checkpoints.cpp
@@ -67,10 +68,13 @@ set(LIB_SOURCES
     noui.cpp
     protocol.cpp
     rpcblockchain.cpp
+    rpcclient.cpp
     rpcdump.cpp
     rpcmining.cpp
     rpcnet.cpp
+    rpcprotocol.cpp
     rpcrawtransaction.cpp
+    rpcserver.cpp
     rpcwallet.cpp
     script.cpp
     sync.cpp
