@@ -143,7 +143,7 @@ target_link_libraries(bitcoinqt bitcoin leveldb
 		      ${OPENSSL_LIBRARIES}
 		      )
 
-if(USE_QRENCODE)
+if(USE_QRCODE)
     include_directories(${QRENCODE_INCLUDE_DIR})
     target_link_libraries(bitcoinqt ${QRENCODE_LIBRARY})
 endif()

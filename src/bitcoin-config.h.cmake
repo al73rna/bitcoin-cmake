@@ -11,12 +11,12 @@
 #cmakedefine MSG_NOSIGNAL
 #cmakedefine HAVE_MSG_NOSIGNAL
 
-// USE_UPNP is defined whenever UPNP should be compiled 
-// and linked with. The value assigned is 1 if UPNP should 
+// USE_UPNP is defined whenever UPnP should be compiled 
+// and linked with. The value assigned is 1 if UPnP should 
 // be enabled during bitcoin startup and 0 if not.
 #cmakedefine USE_UPNP @UPNP_SETTING@
 
 #define USE_IPV6 @USE_IPV6@
 
-#define USE_QRENCODE @USE_QRENCODE@
+#cmakedefine USE_QRCODE 
 
