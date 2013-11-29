@@ -20,3 +20,4 @@
 
 #cmakedefine USE_QRCODE 
 
+#cmakedefine USE_DBUS

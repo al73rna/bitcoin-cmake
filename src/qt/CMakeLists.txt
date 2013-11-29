@@ -154,6 +154,10 @@ add_dependencies(bitcoinqt bitcoin_translations)
 # Link library with qt libs
 qt4_use_modules(bitcoinqt Core Gui Network)
 
+if(USE_DBUS)
+    qt4_use_modules(bitcoinqt Dbus)
+endif()
+
 add_executable(bitcoin-qt bitcoin.cpp)
 
 target_link_libraries(bitcoin-qt bitcoinqt)

@@ -59,7 +59,7 @@ if(NOT OPENSSL_FOUND)
 endif()
 
 # bitcoin-qt dependencies (4.4.3 arbitrarily set via docs):
-find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork)
+find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork QtDbus)
 find_package(Protobuf)
 
 if(QT_FOUND AND PROTOBUF_FOUND)
@@ -120,13 +120,15 @@ if(USE_QRCODE AND NOT QRENCODE_DEPS_FOUND)
     message(FATAL_ERROR "USE_QRCODE requested but unable to find qt or libqrencode dependencies.")
 endif()
 
-
-#AC_ARG_WITH([qrencode],
-#  [AS_HELP_STRING([--with-qrencode],
-#  [enable QR code support (default is yes if qt is enabled and libqrencode is found)])],
-#  [use_qr=$withval],
-#  [use_qr=auto])
-#PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes],	[have_qrencode=no])
+option(USE_DBUS "Enable DBus support (default is yes if qt is enabled and QtDbus is found)" ${QT_QTDBUS_FOUND})
+if(USE_DBUS)
+    if(NOT BUILD_QT)
+        message(FATAL_ERROR "USE_DBUS requires BUILD_QT to be set.")
+    endif()
+    if(NOT QT_QTDBUS_FOUND)
+        message(FATAL_ERROR "USE_DBUS requested but QtDbus not found.")
+    endif()
+endif()
 
 # 
 # TODO: add cache options for things in configure.ac
@@ -143,12 +145,6 @@ endif()
 #    [use_comparison_tool_reorg_tests=$enableval],
 #    [use_comparison_tool_reorg_tests=no])
 #
-#
-#AC_ARG_WITH([qtdbus],
-#  [AS_HELP_STRING([--with-qtdbus],
-#  [enable DBus support (default is yes if qt is enabled and QtDBus is found)])],
-#  [use_dbus=$withval],
-#  [use_dbus=auto])
 #
 #AC_ARG_ENABLE([hardening],
 #  [AS_HELP_STRING([--enable-hardening],
@@ -191,33 +187,6 @@ endif()
 
 #dnl these are only used when qt is enabled
 #if test x$use_qt = xyes; then
-#
-#  dnl enable dbus support
-#  AC_MSG_CHECKING([if dbus should be enabled])
-#  if test x$use_dbus != xno; then
-#    use_dbus=yes
-#    AC_DEFINE([USE_DBUS],[1],[Define if dbus support should be compiled in])
-#  else
-#    use_dbus=no
-#  fi
-#  AC_MSG_RESULT($use_dbus)
-#
-#  dnl enable qr support
-#  AC_MSG_CHECKING([if qr should be enabled])
-#  if test x$have_qrencode = xno; then
-#    if test x$use_qr == xyes; then
-#     AC_MSG_ERROR("QR support requested but cannot be built. use --without-qrencode")
-#    fi
-#    AC_MSG_RESULT(no)
-#  else
-#    if test x$use_qr != xno; then
-#      AC_MSG_RESULT(yes)
-#      AC_DEFINE([USE_QRCODE],[1],[Define if QR support should be compiled in])
-#      use_qr=yes
-#    else
-#      AC_MSG_RESULT(no)
-#    fi
-#  fi
 #
 #  if test x$use_tests$have_qt_test = xyesyes; then
 #    BUILD_TEST_QT="test"
