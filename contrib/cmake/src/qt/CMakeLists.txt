@@ -1,6 +1,11 @@
 
-file(GLOB FORMS forms/*.ui)
-file(GLOB PROTOBUF_DEFS *.proto)
+set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
+       ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+file(GLOB FORMS ${CMAKE_CURRENT_SOURCE_DIR}/forms/*.ui)
+file(GLOB PROTOBUF_DEFS ${CMAKE_CURRENT_SOURCE_DIR}/*.proto)
 
 set(LIB_HEADERS
     aboutdialog.h
@@ -96,9 +101,19 @@ set(LIB_SOURCES
     walletview.cpp
 )
 
-include_directories(.)
-include_directories(..)
-include_directories(${QT_INCLUDES})
+set(DIR_SOURCES)
+foreach(file ${LIB_SOURCES})
+    set(DIR_SOURCES ${DIR_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+endforeach()
+
+set(DIR_HEADERS)
+foreach(file ${LIB_HEADERS})
+    set(DIR_HEADERS ${DIR_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+endforeach()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/..
+                    ${QT_INCLUDES})
 
 include(${QT_USE_FILE})
 
@@ -108,7 +123,8 @@ include(${QT_USE_FILE})
 # directories. 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(locale)
+add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/locale
+                 ${CMAKE_CURRENT_BINARY_DIR}/locale)
 
 # This is a bit annoying but at least it allows out-of-source 
 # building.  We copy the qrc and resource files to the build 
@@ -126,7 +142,7 @@ qt4_add_resources(RESOURCES_RCC ${CMAKE_CURRENT_BINARY_DIR}/bitcoin.qrc)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 protobuf_generate_cpp(PROTOBUF_SOURCES PROTOBUF_HEADERS ${PROTOBUF_DEFS})
 
-add_library(bitcoinqt ${LIB_HEADERS} ${LIB_SOURCES}
+add_library(bitcoinqt ${DIR_HEADERS} ${DIR_SOURCES}
             ${BITCOIN_QM_FILES}
 	    ${FORMS_HEADERS}
 	    ${RESOURCES_RCC}
@@ -158,7 +174,7 @@ if(USE_DBUS)
     qt4_use_modules(bitcoinqt Dbus)
 endif()
 
-add_executable(bitcoin-qt bitcoin.cpp)
+add_executable(bitcoin-qt ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin.cpp)
 
 target_link_libraries(bitcoin-qt bitcoinqt)
 

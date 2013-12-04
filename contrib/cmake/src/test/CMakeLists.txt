@@ -1,4 +1,8 @@
 
+set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
+       ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(TEST_SOURCES
     accounting_tests.cpp
     #alert_tests.cpp
@@ -36,6 +40,11 @@ set(TEST_SOURCES
     wallet_tests.cpp
 )
 
+set(DIR_SOURCES)
+foreach(file ${TEST_SOURCES})
+    set(DIR_SOURCES ${DIR_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+endforeach()
+
 set(JSON_FILES
     data/base58_encode_decode.json
     data/base58_keys_invalid.json
@@ -50,7 +59,8 @@ set(JSON_FILES
     
 foreach(JSON_FILE ${JSON_FILES})
     string(REGEX REPLACE ".json" ".json.h" JSON_HEADER ${JSON_FILE})
-    configure_file(${JSON_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${JSON_HEADER})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${JSON_FILE}
+                   ${CMAKE_CURRENT_BINARY_DIR}/${JSON_HEADER})
 endforeach()
 
 set(RAW_FILES data/alertTests.raw)
@@ -64,23 +74,23 @@ foreach(RAW_FILE ${RAW_FILES})
                 ${CMAKE_CURRENT_BINARY_DIR}/${RAW_HEADER})
 endforeach()
 
-include_directories(..
-                    ../leveldb
-                    ../leveldb/include
-                    ../leveldb/helpers
+include_directories(${CMAKE_SOURCE_DIR}/src
+                    ${CMAKE_SOURCE_DIR}/src/leveldb
+                    ${CMAKE_SOURCE_DIR}/src/leveldb/include
+                    ${CMAKE_SOURCE_DIR}/src/leveldb/helpers
                     ${CMAKE_CURRENT_BINARY_DIR}
 		    )
 
-add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
-add_definitions (-DBOOST_TEST_DYN_LINK)
+add_definitions("-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP")
+add_definitions(-DBOOST_TEST_DYN_LINK)
 
 include_directories(${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
                     ${OPENSSL_INCLUDE_DIRS}
                     )
 
-add_executable(test_bitcoin test_bitcoin.cpp
-               ${TEST_SOURCES}
+add_executable(test_bitcoin ${CMAKE_CURRENT_SOURCE_DIR}/test_bitcoin.cpp
+               ${DIR_SOURCES}
                ${JSON_TEST_FILES}
                ${RAW_TEST_FILES}
 	       )

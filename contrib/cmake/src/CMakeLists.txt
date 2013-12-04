@@ -1,4 +1,11 @@
 
+set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
+       ${CMAKE_CURRENT_SOURCE_DIR})
+message(STATUS "CONTRIB_CURRENT_SOURCE_DIR: ${CONTRIB_CURRENT_SOURCE_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
+
+
 set(LIB_HEADERS
     addrman.h
     alert.h
@@ -86,7 +93,18 @@ set(LIB_SOURCES
     walletdb.cpp
     )
 
-add_subdirectory(leveldb)
+set(DIR_SOURCES)
+foreach(file ${LIB_SOURCES})
+    set(DIR_SOURCES ${DIR_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+endforeach()
+
+set(DIR_HEADERS)
+foreach(file ${LIB_HEADERS})
+    set(DIR_HEADERS ${DIR_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+endforeach()
+
+add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/leveldb
+                 ${CMAKE_CURRENT_BINARY_DIR}/leveldb)
 
 add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
 
@@ -99,11 +117,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
 	            ${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
                     ${OPENSSL_INCLUDE_DIRS}
-                    "leveldb/include"
-                    "leveldb/helpers"
+                    ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers
                     )
 
-add_library(bitcoin ${LIB_HEADERS} ${LIB_SOURCES})
+add_library(bitcoin ${DIR_HEADERS} ${DIR_SOURCES})
 target_link_libraries(bitcoin leveldb
                       ${CMAKE_THREAD_LIBS_INIT}
 		      ${BDB_LIBRARY}
@@ -116,17 +134,19 @@ if(USE_UPNP)
     target_link_libraries(bitcoin ${MINIUPNP_LIBRARY})
 endif()
 
-add_executable(bitcoind bitcoind.cpp)
+add_executable(bitcoind ${CMAKE_CURRENT_SOURCE_DIR}/bitcoind.cpp)
 target_link_libraries(bitcoind bitcoin)
 
-add_executable(bitcoin-cli bitcoin-cli.cpp)
+add_executable(bitcoin-cli ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-cli.cpp)
 target_link_libraries(bitcoin-cli bitcoin)
 
 if(BUILD_QT)
-    add_subdirectory( qt )
+    add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/qt
+                     ${CMAKE_CURRENT_BINARY_DIR}/qt)
 endif()
 
 if(ENABLE_TESTS)
-    add_subdirectory(test)
+    add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/test
+                     ${CMAKE_CURRENT_BINARY_DIR}/test)
 endif()
 

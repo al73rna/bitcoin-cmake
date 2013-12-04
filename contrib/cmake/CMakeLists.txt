@@ -1,3 +1,16 @@
+
+set(CONTRIB_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+string(REGEX REPLACE "/contrib/cmake" "" CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+message(STATUS "CONTRIB_SOURCE_DIR: ${CONTRIB_SOURCE_DIR}")
+message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
+set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
+       ${CMAKE_CURRENT_SOURCE_DIR})
+message(STATUS "CONTRIB_CURRENT_SOURCE_DIR: ${CONTRIB_CURRENT_SOURCE_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
+
+
 cmake_minimum_required(VERSION 2.8) # Needed for file(COPY ...)
 
 project(bitcoin)
@@ -33,8 +46,12 @@ set(COPYRIGHT_YEAR "2013")
 set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
 set(prefix ${CMAKE_INSTALL_PREFIX})
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CONTRIB_SOURCE_DIR}/modules)
 INCLUDE(UsePkgConfig)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # This is probably a hack to get PRId64 defines from <inttypes.h> which 
 # doesn't seem to define them without manual intervention.
@@ -222,7 +239,8 @@ option(ENABLE_TESTS "Compile and enable unit tests." TRUE)
 #  fi
 #fi
 
-add_subdirectory(src)
+add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
+                 ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
