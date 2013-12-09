@@ -242,7 +242,7 @@ add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in 
+    configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/doc/Doxyfile.in.cmake
 	           ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
     add_custom_target(doc ${DOXYGEN_EXECUTABLE}
                       ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile

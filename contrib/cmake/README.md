@@ -8,6 +8,7 @@ Features:
   - Allows out-of-source directory builds.
   - Provides GUI access to configurable bitcoin build options.
   - Allows CMakeLists.txt out-of-source builds (as in contrib/cmake).
+  - Doxygen integrated with build system variables.
 
 Prerequisites:
   - >= CMake 2.8
