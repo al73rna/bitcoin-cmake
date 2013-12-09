@@ -1,9 +1,9 @@
 
+# Save current directory path of this CMakeLists.txt into CONTRIB_SOURCE_DIR 
+# and overwrite CMAKE_*_SOURCE_DIR with the path to the actual source.
 set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
        ${CMAKE_CURRENT_SOURCE_DIR})
-message(STATUS "CONTRIB_CURRENT_SOURCE_DIR: ${CONTRIB_CURRENT_SOURCE_DIR}")
-message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 set(LIB_HEADERS
