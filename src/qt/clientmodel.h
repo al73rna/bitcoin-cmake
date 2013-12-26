@@ -46,8 +46,8 @@ public:
     double getVerificationProgress() const;
     QDateTime getLastBlockDate() const;
 
-    //! Return true if client connected to testnet
-    bool isTestNet() const;
+    //! Return network (main, testnet3, regtest)
+    QString getNetworkName() const;
     //! Return true if core is doing initial block download
     bool inInitialBlockDownload() const;
     //! Return true if core is importing blocks
@@ -84,7 +84,7 @@ signals:
     void alertsChanged(const QString &warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
 
-    //! Asynchronous message notification
+    //! Fired when a message should be reported to the user
     void message(const QString &title, const QString &message, unsigned int style);
 
 public slots:

@@ -17,6 +17,7 @@
 #include "main.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "wallet.h"
 
 #include <stdint.h>
 
@@ -53,7 +54,6 @@ static SplashScreen *splashref;
 
 static bool ThreadSafeMessageBox(const std::string& message, const std::string& caption, unsigned int style)
 {
-    // Message from network thread
     if(guiref)
     {
         bool modal = (style & CClientUIInterface::MODAL);
@@ -73,22 +73,6 @@ static bool ThreadSafeMessageBox(const std::string& message, const std::string& 
         fprintf(stderr, "%s: %s\n", caption.c_str(), message.c_str());
         return false;
     }
-}
-
-static bool ThreadSafeAskFee(int64_t nFeeRequired)
-{
-    if(!guiref)
-        return false;
-    if(nFeeRequired < CTransaction::nMinTxFee || nFeeRequired <= nTransactionFee || fDaemon)
-        return true;
-
-    bool payFee = false;
-
-    QMetaObject::invokeMethod(guiref, "askFee", GUIUtil::blockingGUIThreadConnection(),
-                               Q_ARG(qint64, nFeeRequired),
-                               Q_ARG(bool*, &payFee));
-
-    return payFee;
 }
 
 static void InitMessage(const std::string &message)
@@ -160,17 +144,17 @@ static void initTranslations(QTranslator &qtTranslatorBase, QTranslator &qtTrans
 
 /* qDebug() message handler --> debug.log */
 #if QT_VERSION < 0x050000
-void DebugMessageHandler(QtMsgType type, const char * msg)
+void DebugMessageHandler(QtMsgType type, const char *msg)
 {
     Q_UNUSED(type);
-    LogPrint("qt", "Bitcoin-Qt: %s\n", msg);
+    LogPrint("qt", "GUI: %s\n", msg);
 }
 #else
 void DebugMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
 {
     Q_UNUSED(type);
     Q_UNUSED(context);
-    LogPrint("qt", "Bitcoin-Qt: %s\n", qPrintable(msg));
+    LogPrint("qt", "GUI: %s\n", qPrintable(msg));
 }
 #endif
 
@@ -201,15 +185,23 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(bitcoin);
     QApplication app(argc, argv);
+#if QT_VERSION > 0x050100
+    // Generate high-dpi pixmaps
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
+#ifdef Q_OS_MAC
+    QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+#endif
 
     // Register meta types used for QMetaObject::invokeMethod
     qRegisterMetaType< bool* >();
 
     // Application identification (must be set before OptionsModel is initialized,
     // as it is used to locate QSettings)
+    bool isaTestNet = TestNet() || RegTest();
     QApplication::setOrganizationName("Bitcoin");
     QApplication::setOrganizationDomain("bitcoin.org");
-    if (TestNet()) // Separate UI settings for testnet
+    if (isaTestNet) // Separate UI settings for testnets
         QApplication::setApplicationName("Bitcoin-Qt-testnet");
     else
         QApplication::setApplicationName("Bitcoin-Qt");
@@ -240,7 +232,7 @@ int main(int argc, char *argv[])
     PaymentServer* paymentServer = new PaymentServer(&app);
 
     // User language is set up: pick a data directory
-    Intro::pickDataDirectory(TestNet());
+    Intro::pickDataDirectory(isaTestNet);
 
     // Install global event filter that makes sure that long tooltips can be word-wrapped
     app.installEventFilter(new GUIUtil::ToolTipToRichTextFilter(TOOLTIP_WRAP_THRESHOLD, &app));
@@ -256,7 +248,6 @@ int main(int argc, char *argv[])
 
     // Subscribe to global signals from core
     uiInterface.ThreadSafeMessageBox.connect(ThreadSafeMessageBox);
-    uiInterface.ThreadSafeAskFee.connect(ThreadSafeAskFee);
     uiInterface.InitMessage.connect(InitMessage);
     uiInterface.Translate.connect(Translate);
 
@@ -269,7 +260,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    SplashScreen splash(QPixmap(), 0);
+    SplashScreen splash(QPixmap(), 0, isaTestNet);
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min", false))
     {
         splash.show();
@@ -291,7 +282,7 @@ int main(int argc, char *argv[])
 
         boost::thread_group threadGroup;
 
-        BitcoinGUI window(TestNet(), 0);
+        BitcoinGUI window(isaTestNet, 0);
         guiref = &window;
 
         QTimer* pollShutdownTimer = new QTimer(guiref);
@@ -313,11 +304,12 @@ int main(int argc, char *argv[])
                     splash.finish(&window);
 
                 ClientModel clientModel(&optionsModel);
+                window.setClientModel(&clientModel);
+
                 WalletModel *walletModel = 0;
                 if(pwalletMain)
                     walletModel = new WalletModel(pwalletMain, &optionsModel);
 
-                window.setClientModel(&clientModel);
                 if(walletModel)
                 {
                     window.addWallet("~Default", walletModel);
@@ -357,7 +349,7 @@ int main(int argc, char *argv[])
                 guiref = 0;
                 delete walletModel;
             }
-            // Shutdown the core and its threads, but don't exit Bitcoin-Qt here
+            // Shutdown the core and its threads, but don't exit the GUI here
             threadGroup.interrupt_all();
             threadGroup.join_all();
             Shutdown();

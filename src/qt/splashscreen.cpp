@@ -4,14 +4,13 @@
 
 #include "splashscreen.h"
 
-#include "chainparams.h"
 #include "clientversion.h"
 #include "util.h"
 
 #include <QApplication>
 #include <QPainter>
 
-SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
+SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f, bool isTestNet) :
     QSplashScreen(pixmap, f)
 {
     // set reference point, paddings
@@ -23,16 +22,16 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     float fontFactor            = 1.0;
 
     // define text to place
-    QString titleText       = QString(QApplication::applicationName()).replace(QString("-testnet"), QString(""), Qt::CaseSensitive); // cut of testnet, place it as single object further down
+    QString titleText       = tr("Bitcoin Core");
     QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightText   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin developers"));
+    QString copyrightText   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin Core developers"));
     QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
 
     QString font            = "Arial";
 
     // load the bitmap for writing some text over it
     QPixmap newPixmap;
-    if(TestNet()) {
+    if(isTestNet) {
         newPixmap     = QPixmap(":/images/splash_testnet");
     }
     else {
@@ -72,7 +71,7 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop+titleCopyrightVSpace,copyrightText);
 
     // draw testnet string if testnet is on
-    if(TestNet()) {
+    if(isTestNet) {
         QFont boldFont = QFont(font, 10*fontFactor);
         boldFont.setWeight(QFont::Bold);
         pixPaint.setFont(boldFont);

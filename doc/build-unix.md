@@ -11,18 +11,13 @@ To Build
 
 This will build bitcoin-qt as well if the dependencies are met.
 
-**Note:** on Ubuntu 13.10 (Saucy Salamander) the boost configuration script doesn't look in the
-correct directory and an error about boost-system will appear. For now you need to do
-
-        ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
-
 Dependencies
 ---------------------
 
  Library     Purpose           Description
  -------     -------           -----------
  libssl      SSL Support       Secure communications
- libdb4.8    Berkeley DB       Blockchain & wallet storage
+ libdb4.8    Berkeley DB       Wallet storage
  libboost    Boost             C++ Library
  miniupnpc   UPnP Support      Optional firewall-jumping support
  qt          GUI               GUI toolkit
@@ -93,7 +88,7 @@ are installed. Qt 4 is currently necessary to build the GUI.
 
 To build with Qt 4 you need the following:
 
-    apt-get install libqt4-dev libprotobuf-dev
+    apt-get install libqt4-dev libprotobuf-dev protobuf-compiler
 
 libqrencode (optional) can be installed with:
 
@@ -140,7 +135,10 @@ To help make your bitcoin installation more secure by making certain attacks imp
 exploit even if a vulnerability is found, binaries are hardened by default.
 This can be disabled with:
 
-./configure --enable-hardening
+Hardening Flags:
+
+	./configure --enable-hardening
+	./configure --disable-hardening
 
 
 Hardening enables the following features:
@@ -178,3 +176,16 @@ Hardening enables the following features:
 	RW- R-- RW-
 
     The STK RW- means that the stack is readable and writeable but not executable.
+
+Disable-wallet mode
+--------------------
+When the intention is to run only a P2P node without a wallet, bitcoin may be compiled in
+disable-wallet mode with:
+
+    ./configure --disable-wallet
+
+In this case there is no dependency on Berkeley DB 4.8.
+
+Mining is also possible in disable-wallet mode, but only using the `getblocktemplate` RPC
+call not `getwork`.
+

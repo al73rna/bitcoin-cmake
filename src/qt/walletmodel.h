@@ -17,6 +17,7 @@
 
 class AddressTableModel;
 class OptionsModel;
+class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
 
@@ -74,8 +75,7 @@ public:
         AmountWithFeeExceedsBalance,
         DuplicateAddress,
         TransactionCreationFailed, // Error returned when wallet is still locked
-        TransactionCommitFailed,
-        Aborted
+        TransactionCommitFailed
     };
 
     enum EncryptionStatus
@@ -88,6 +88,7 @@ public:
     OptionsModel *getOptionsModel();
     AddressTableModel *getAddressTableModel();
     TransactionTableModel *getTransactionTableModel();
+    RecentRequestsTableModel *getRecentRequestsTableModel();
 
     qint64 getBalance(const CCoinControl *coinControl = NULL) const;
     qint64 getUnconfirmedBalance() const;
@@ -101,7 +102,7 @@ public:
     // Return status record for SendCoins, contains error id + information
     struct SendCoinsReturn
     {
-        SendCoinsReturn(StatusCode status = Aborted):
+        SendCoinsReturn(StatusCode status = OK):
             status(status) {}
         StatusCode status;
     };
@@ -160,6 +161,7 @@ private:
 
     AddressTableModel *addressTableModel;
     TransactionTableModel *transactionTableModel;
+    RecentRequestsTableModel *recentRequestsTableModel;
 
     // Cache some values to be able to detect changes
     qint64 cachedBalance;
