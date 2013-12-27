@@ -120,6 +120,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
                     ${OPENSSL_INCLUDE_DIRS}
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers
+                    ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers/memenv
                     )
 
 add_library(bitcoin ${DIR_HEADERS} ${DIR_SOURCES})

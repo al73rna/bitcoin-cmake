@@ -3,9 +3,6 @@ set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
        ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB HEADERS db/*.h util/*.h table/*.h helpers/memenv/*.h)
-file(GLOB SOURCES db/*.cc util/*.cc table/*.cc helpers/memenv/*.cc)
-
 set(HEADERS
     db/builder.h
     db/dbformat.h
@@ -122,6 +119,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(leveldb STATIC ${DIR_HEADERS} ${DIR_SOURCES})
 
 # Leftover from previous glob() usage in case we switch back:
+#
+#file(GLOB HEADERS db/*.h util/*.h table/*.h helpers/memenv/*.h)
+#file(GLOB SOURCES db/*.cc util/*.cc table/*.cc helpers/memenv/*.cc)
+#
 # Remove unit tests and main functions from lib:
 #foreach(SOURCE ${SOURCES})
 #    if(SOURCE MATCHES "(.*)_test.cc")
