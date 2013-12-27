@@ -89,18 +89,22 @@ set(SOURCES
     helpers/memenv/memenv.cc
     )
 
-# TODO: Need proper switch between platforms
-list(APPEND SOURCES port/port_posix.cc)
+if(UNIX OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_definitions( -DLEVELDB_PLATFORM_POSIX )
+    list(APPEND SOURCES port/port_posix.cc)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_definitions( -DLEVELDB_PLATFORM_WINDOWS )
+    list(APPEND SOURCES port/port_win.cc)
+else() 
+    # TODO ??:
+    #	LEVELDB_PLATFORM_CHROMIUM
+    message(FATAL "LevelDB: Unknown Build System.  Aborting.")
+endif()
 
-# Leftover from previous glob() usage in case we switch back:
-# Remove unit tests and main functions from lib:
-#foreach(SOURCE ${SOURCES})
-#    if(SOURCE MATCHES "(.*)_test.cc")
-#        list(REMOVE_ITEM SOURCES ${SOURCE})
-#    elseif(SOURCE MATCHES "(.*)_main.cc")
-#        list(REMOVE_ITEM SOURCES ${SOURCE})
-#    endif()
-#endforeach()
+# TODO:
+#add_definitions(
+	#-DTARGET_OS=OS_WINDOWS_CROSSCOMPILE
+	#-DTARGET_OS=Darwin
 
 set(DIR_SOURCES)
 foreach(file ${SOURCES})
@@ -115,15 +119,16 @@ endforeach()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# TODO: Need proper switch between platforms 
-add_definitions( -DLEVELDB_PLATFORM_POSIX )
-	#	LEVELDB_PLATFORM_CHROMIUM
-	#       LEVELDB_PLATFORM_WINDOWS
-
-# TODO:
-#add_definitions(
-	#-DTARGET_OS=OS_WINDOWS_CROSSCOMPILE
-	#-DTARGET_OS=Darwin
-
 add_library(leveldb STATIC ${DIR_HEADERS} ${DIR_SOURCES})
+
+# Leftover from previous glob() usage in case we switch back:
+# Remove unit tests and main functions from lib:
+#foreach(SOURCE ${SOURCES})
+#    if(SOURCE MATCHES "(.*)_test.cc")
+#        list(REMOVE_ITEM SOURCES ${SOURCE})
+#    elseif(SOURCE MATCHES "(.*)_main.cc")
+#        list(REMOVE_ITEM SOURCES ${SOURCE})
+#    endif()
+#endforeach()
+
 
