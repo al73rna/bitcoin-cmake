@@ -83,6 +83,8 @@ else()
     set(HAVE_BITCOINQT_DEPS FALSE)
 endif()
 
+option(ENABLE_WALLET "Enable wallet feature. (default is yes)" ON)
+
 option(BUILD_QT "Enable bitcoin-qt GUI (default is yes if deps are satisfied)" ${HAVE_BITCOINQT_DEPS})
 if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
     message(FATAL_ERROR "BUILD_QT was requested but there are unmet dependencies:")
@@ -92,6 +94,11 @@ if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
     if(NOT PROTOBUF_FOUND)
         message(FATAL_ERROR " * Protobuf library not found.")
     endif()
+endif()
+
+if(BUILD_QT AND NOT ENABLE_WALLET)
+    message(STATUS "BUILD_QT requires ENABLE_WALLET. Enabling wallet implicitly.")
+    set(ENABLE_WALLET ON)
 endif()
 
 find_package(Miniupnpc)

@@ -28,6 +28,7 @@ set(TEST_SOURCES
     netbase_tests.cpp
     pmt_tests.cpp
     rpc_tests.cpp
+    rpc_wallet_tests.cpp
     script_P2SH_tests.cpp
     #script_tests.cpp
     serialize_tests.cpp

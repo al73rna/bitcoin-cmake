@@ -38,6 +38,7 @@ set(LIB_HEADERS
     qvaluecombobox.h
     receivecoinsdialog.h
     receiverequestdialog.h
+    recentrequeststablemodel.h
     rpcconsole.h
     sendcoinsdialog.h
     sendcoinsentry.h
@@ -85,6 +86,7 @@ set(LIB_SOURCES
     qvaluecombobox.cpp
     receivecoinsdialog.cpp
     receiverequestdialog.cpp
+    recentrequeststablemodel.cpp
     rpcconsole.cpp
     sendcoinsdialog.cpp
     sendcoinsentry.cpp

@@ -78,6 +78,7 @@ set(LIB_SOURCES
     rpcclient.cpp
     rpcdump.cpp
     rpcmining.cpp
+    rpcmisc.cpp
     rpcnet.cpp
     rpcprotocol.cpp
     rpcrawtransaction.cpp
