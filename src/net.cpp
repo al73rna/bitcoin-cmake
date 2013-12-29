@@ -955,7 +955,8 @@ void ThreadSocketHandler()
                 LogPrintf("connection from %s dropped (banned)\n", addr.ToString().c_str());
                 closesocket(hSocket);
             }
-            else
+
+            if (hSocket != INVALID_SOCKET)
             {
                 LogPrint("net", "accepted connection %s\n", addr.ToString().c_str());
                 CNode* pnode = new CNode(hSocket, addr, "", true);
@@ -1626,6 +1627,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     {
         strError = strprintf("Error: Couldn't set properties on socket for incoming connections (error %d)", WSAGetLastError());
         LogPrintf("%s\n", strError.c_str());
+        closesocket(hListenSocket);
         return false;
     }
 
@@ -1657,6 +1659,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
         else
             strError = strprintf(_("Unable to bind to %s on this computer (bind returned error %d, %s)"), addrBind.ToString().c_str(), nErr, strerror(nErr));
         LogPrintf("%s\n", strError.c_str());
+        closesocket(hListenSocket);
         return false;
     }
     LogPrintf("Bound to %s\n", addrBind.ToString().c_str());
@@ -1666,6 +1669,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     {
         strError = strprintf("Error: Listening for incoming connections failed (listen returned error %d)", WSAGetLastError());
         LogPrintf("%s\n", strError.c_str());
+        closesocket(hListenSocket);
         return false;
     }
 
