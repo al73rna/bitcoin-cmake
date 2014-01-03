@@ -90,7 +90,7 @@ Notificator::~Notificator()
 class FreedesktopImage
 {
 public:
-    FreedesktopImage() {}
+    FreedesktopImage();
     FreedesktopImage(const QImage &img);
 
     static int metaType();
@@ -115,6 +115,14 @@ Q_DECLARE_METATYPE(FreedesktopImage);
 const int CHANNELS = 4;
 const int BYTES_PER_PIXEL = 4;
 const int BITS_PER_SAMPLE = 8;
+
+FreedesktopImage::FreedesktopImage() :
+    width(0), height(0), stride(0),
+    hasAlpha(true),
+    channels(CHANNELS),
+    bitsPerSample(BITS_PER_SAMPLE)
+{
+}
 
 FreedesktopImage::FreedesktopImage(const QImage &img):
     width(img.width()),

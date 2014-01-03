@@ -63,7 +63,9 @@ int HMAC_SHA512_Init(HMAC_SHA512_CTX *pctx, const void *pkey, size_t len)
     if (len <= 128)
     {
         memcpy(key, pkey, len);
-        memset(key + len, 0, 128-len);
+        if (len < 128) {
+            memset(key + len, 0, 128-len);
+        }
     }
     else
     {

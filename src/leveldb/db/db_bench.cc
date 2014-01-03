@@ -171,7 +171,10 @@ class Stats {
   std::string message_;
 
  public:
-  Stats() { Start(); }
+  Stats() {
+    start_ = Env::Default()->NowMicros();
+    Start();
+  }
 
   void Start() {
     next_report_ = 100;

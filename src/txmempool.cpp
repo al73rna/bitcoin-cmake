@@ -10,6 +10,10 @@ using namespace std;
 
 CTxMemPoolEntry::CTxMemPoolEntry()
 {
+    nFee = 0;
+    nTxSize = 0;
+    nTime = 0;
+    dPriority = 0.0;
     nHeight = MEMPOOL_HEIGHT;
 }
 
@@ -41,6 +45,7 @@ CTxMemPool::CTxMemPool()
     // accepting transactions becomes O(N^2) where N is the number
     // of transactions in the pool
     fSanityCheck = false;
+    nTransactionsUpdated = 0;
 }
 
 void CTxMemPool::pruneSpent(const uint256 &hashTx, CCoins &coins)

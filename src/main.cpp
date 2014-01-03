@@ -978,6 +978,9 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
 
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
 {
+    if (!pindex)
+        return error("ReadBlockFromDisk(CBlock&, CBlockIndex*) : passed null block index");
+
     if (!ReadBlockFromDisk(block, pindex->GetBlockPos()))
         return false;
     if (block.GetHash() != pindex->GetBlockHash())
