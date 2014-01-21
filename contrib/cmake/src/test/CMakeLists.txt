@@ -35,7 +35,6 @@ set(TEST_SOURCES
     sighash_tests.cpp
     sigopcount_tests.cpp
     #transaction_tests.cpp
-    uint160_tests.cpp
     uint256_tests.cpp
     util_tests.cpp
     wallet_tests.cpp

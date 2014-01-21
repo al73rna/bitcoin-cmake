@@ -134,10 +134,10 @@ add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/locale
 # building.  We copy the qrc and resource files to the build 
 # directory to allow rcc to get the relative paths correct.
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin.qrc DESTINATION
-	  ${CMAKE_CURRENT_BINARY_DIR})
+          ${CMAKE_CURRENT_BINARY_DIR})
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res DESTINATION
-	  ${CMAKE_CURRENT_BINARY_DIR})
+          ${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate intermediate Qt-specific files from .ui and .h
 qt4_wrap_ui(FORMS_HEADERS ${FORMS})
@@ -148,20 +148,20 @@ protobuf_generate_cpp(PROTOBUF_SOURCES PROTOBUF_HEADERS ${PROTOBUF_DEFS})
 
 add_library(bitcoinqt ${DIR_HEADERS} ${DIR_SOURCES}
             ${BITCOIN_QM_FILES}
-	    ${FORMS_HEADERS}
-	    ${RESOURCES_RCC}
-	    ${PROTOBUF_SOURCES} ${PROTOBUF_HEADERS}
-	    )
+            ${FORMS_HEADERS}
+            ${RESOURCES_RCC}
+            ${PROTOBUF_SOURCES} ${PROTOBUF_HEADERS}
+           )
 
 set_target_properties(bitcoinqt PROPERTIES AUTOMOC TRUE)
  
 target_link_libraries(bitcoinqt bitcoin leveldb
-		      ${PROTOBUF_LIBRARIES}
+                      ${PROTOBUF_LIBRARIES}
                       ${CMAKE_THREAD_LIBS_INIT}
-		      ${BDB_LIBRARY}
+                      ${BDB_LIBRARY}
                       ${Boost_LIBRARIES}
-		      ${OPENSSL_LIBRARIES}
-		      )
+                      ${OPENSSL_LIBRARIES}
+                     )
 
 if(USE_QRCODE)
     include_directories(${QRENCODE_INCLUDE_DIR})
@@ -179,6 +179,9 @@ if(USE_DBUS)
 endif()
 
 add_executable(bitcoin-qt ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin.cpp)
+
+# run moc also on bitcoin.cpp:
+set_target_properties(bitcoin-qt PROPERTIES AUTOMOC TRUE)
 
 target_link_libraries(bitcoin-qt bitcoinqt)
 
