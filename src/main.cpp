@@ -56,8 +56,13 @@ int64_t CTransaction::nMinRelayTxFee = 10000;
 
 static CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
-map<uint256, CBlock*> mapOrphanBlocks;
-multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
+struct COrphanBlock {
+    uint256 hashBlock;
+    uint256 hashPrev;
+    vector<unsigned char> vchBlock;
+};
+map<uint256, COrphanBlock*> mapOrphanBlocks;
+multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
 
 map<uint256, CTransaction> mapOrphanTransactions;
 map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
@@ -878,11 +883,11 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, uint256 &hashBlock
                     fseek(file, postx.nTxOffset, SEEK_CUR);
                     file >> txOut;
                 } catch (std::exception &e) {
-                    return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
+                    return error("%s : Deserialize or I/O error - %s", __PRETTY_FUNCTION__, e.what());
                 }
                 hashBlock = header.GetHash();
                 if (txOut.GetHash() != hash)
-                    return error("%s() : txid mismatch", __PRETTY_FUNCTION__);
+                    return error("%s : txid mismatch", __PRETTY_FUNCTION__);
                 return true;
             }
         }
@@ -931,7 +936,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
     // Open history file to append
     CAutoFile fileout = CAutoFile(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
     if (!fileout)
-        return error("WriteBlockToDisk() : OpenBlockFile failed");
+        return error("WriteBlockToDisk : OpenBlockFile failed");
 
     // Write index header
     unsigned int nSize = fileout.GetSerializeSize(block);
@@ -940,7 +945,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
     // Write block
     long fileOutPos = ftell(fileout);
     if (fileOutPos < 0)
-        return error("WriteBlockToDisk() : ftell failed");
+        return error("WriteBlockToDisk : ftell failed");
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
 
@@ -959,19 +964,19 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
     // Open history file to read
     CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
     if (!filein)
-        return error("ReadBlockFromDisk(CBlock&, CDiskBlockPos&) : OpenBlockFile failed");
+        return error("ReadBlockFromDisk : OpenBlockFile failed");
 
     // Read block
     try {
         filein >> block;
     }
     catch (std::exception &e) {
-        return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
+        return error("%s : Deserialize or I/O error - %s", __PRETTY_FUNCTION__, e.what());
     }
 
     // Check the header
     if (!CheckProofOfWork(block.GetHash(), block.nBits))
-        return error("ReadBlockFromDisk(CBlock&, CDiskBlockPos&) : errors in block header");
+        return error("ReadBlockFromDisk : Errors in block header");
 
     return true;
 }
@@ -988,12 +993,19 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
     return true;
 }
 
-uint256 static GetOrphanRoot(const CBlockHeader* pblock)
+uint256 static GetOrphanRoot(const uint256& hash)
 {
+    map<uint256, COrphanBlock*>::iterator it = mapOrphanBlocks.find(hash);
+    if (it == mapOrphanBlocks.end())
+        return hash;
+
     // Work back to the first block in the orphan chain
-    while (mapOrphanBlocks.count(pblock->hashPrevBlock))
-        pblock = mapOrphanBlocks[pblock->hashPrevBlock];
-    return pblock->GetHash();
+    do {
+        map<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocks.find(it->second->hashPrev);
+        if (it2 == mapOrphanBlocks.end())
+            return it->first;
+        it = it2;
+    } while(true);
 }
 
 int64_t GetBlockValue(int nHeight, int64_t nFees)
@@ -2280,12 +2292,19 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
         // Accept orphans as long as there is a node to request its parents from
         if (pfrom) {
-            CBlock* pblock2 = new CBlock(*pblock);
+            COrphanBlock* pblock2 = new COrphanBlock();
+            {
+                CDataStream ss(SER_DISK, CLIENT_VERSION);
+                ss << *pblock;
+                pblock2->vchBlock = std::vector<unsigned char>(ss.begin(), ss.end());
+            }
+            pblock2->hashBlock = hash;
+            pblock2->hashPrev = pblock->hashPrevBlock;
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
-            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
+            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
 
             // Ask this guy to fill in what we're missing
-            PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(pblock2));
+            PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(hash));
         }
         return true;
     }
@@ -2300,17 +2319,22 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     for (unsigned int i = 0; i < vWorkQueue.size(); i++)
     {
         uint256 hashPrev = vWorkQueue[i];
-        for (multimap<uint256, CBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
+        for (multimap<uint256, COrphanBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
              mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
              ++mi)
         {
-            CBlock* pblockOrphan = (*mi).second;
+            CBlock block;
+            {
+                CDataStream ss(mi->second->vchBlock, SER_DISK, CLIENT_VERSION);
+                ss >> block;
+            }
+            block.BuildMerkleTree();
             // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
             CValidationState stateDummy;
-            if (AcceptBlock(*pblockOrphan, stateDummy))
-                vWorkQueue.push_back(pblockOrphan->GetHash());
-            mapOrphanBlocks.erase(pblockOrphan->GetHash());
-            delete pblockOrphan;
+            if (AcceptBlock(block, stateDummy))
+                vWorkQueue.push_back(mi->second->hashBlock);
+            mapOrphanBlocks.erase(mi->second->hashBlock);
+            delete mi->second;
         }
         mapOrphanBlocksByPrev.erase(hashPrev);
     }
@@ -2855,7 +2879,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
                         break;
                 }
             } catch (std::exception &e) {
-                LogPrintf("%s() : Deserialize or I/O error caught during load\n", __PRETTY_FUNCTION__);
+                LogPrintf("%s : Deserialize or I/O error - %s", __PRETTY_FUNCTION__, e.what());
             }
         }
         fclose(fileIn);
@@ -3334,7 +3358,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 if (!fImporting && !fReindex)
                     pfrom->AskFor(inv);
             } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash)) {
-                PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(mapOrphanBlocks[inv.hash]));
+                PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(inv.hash));
             } else if (nInv == nLastBlock) {
                 // In case we are on a very long side-chain, it is possible that we already have
                 // the last block in an inv bundle sent in response to getblocks. Try to detect
@@ -4122,7 +4146,7 @@ public:
         mapBlockIndex.clear();
 
         // orphan blocks
-        std::map<uint256, CBlock*>::iterator it2 = mapOrphanBlocks.begin();
+        std::map<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocks.begin();
         for (; it2 != mapOrphanBlocks.end(); it2++)
             delete (*it2).second;
         mapOrphanBlocks.clear();
