@@ -42,6 +42,7 @@ set(LIB_HEADERS
     serialize.h
     sync.h
     threadsafety.h
+    tinyformat.h
     txdb.h
     txmempool.h
     ui_interface.h
@@ -115,7 +116,7 @@ configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/bitcoin-config.h.cmake
 add_definitions( "-DHAVE_CONFIG_H" )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
-	            ${BDB_INCLUDE}
+                    ${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
                     ${OPENSSL_INCLUDE_DIRS}
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
@@ -126,10 +127,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
 add_library(bitcoin ${DIR_HEADERS} ${DIR_SOURCES})
 target_link_libraries(bitcoin leveldb
                       ${CMAKE_THREAD_LIBS_INIT}
-		      ${BDB_LIBRARY}
+                      ${BDB_LIBRARY}
                       ${Boost_LIBRARIES}
-		      ${OPENSSL_LIBRARIES}
-		      )
+                      ${OPENSSL_LIBRARIES}
+                     )
 
 if(USE_UPNP)
     include_directories(${MINIUPNP_INCLUDE_DIR})

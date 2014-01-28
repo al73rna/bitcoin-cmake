@@ -10,7 +10,6 @@ file(GLOB FORMS ${CMAKE_CURRENT_SOURCE_DIR}/forms/*.ui)
 file(GLOB PROTOBUF_DEFS ${CMAKE_CURRENT_SOURCE_DIR}/*.proto)
 
 set(LIB_HEADERS
-    aboutdialog.h
     addressbookpage.h
     addresstablemodel.h
     askpassphrasedialog.h
@@ -51,6 +50,7 @@ set(LIB_HEADERS
     transactionrecord.h
     transactiontablemodel.h
     transactionview.h
+    utilitydialog.h
     walletframe.h
     walletmodel.h
     walletmodeltransaction.h
@@ -58,7 +58,6 @@ set(LIB_HEADERS
 )
 
 set(LIB_SOURCES 
-    aboutdialog.cpp
     addressbookpage.cpp
     addresstablemodel.cpp
     askpassphrasedialog.cpp
@@ -99,6 +98,7 @@ set(LIB_SOURCES
     transactionrecord.cpp
     transactiontablemodel.cpp
     transactionview.cpp
+    utilitydialog.cpp
     walletframe.cpp
     walletmodel.cpp
     walletmodeltransaction.cpp
