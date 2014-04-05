@@ -243,7 +243,11 @@ endif()
 #  [use_lcov=no])
 
 
-option(ENABLE_TESTS "Compile and enable unit tests." TRUE)
+option(ENABLE_TESTS "Compile and enable unit tests." FALSE)
+if(ENABLE_TESTS)
+    message(STATUS "Tests temporarily disabled to avoid conversion of .json data files.")
+    SET(ENABLE_TESTS FALSE)
+endif()
 
 #dnl these are only used when qt is enabled
 #if test x$use_qt = xyes; then
