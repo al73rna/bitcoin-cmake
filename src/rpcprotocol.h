@@ -1,5 +1,5 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Bitcoin developers
+// Copyright (c) 2009-2014 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -49,7 +49,9 @@ enum RPCErrorCode
     RPC_INVALID_PARAMETER           = -8,  // Invalid, missing or duplicate parameter
     RPC_DATABASE_ERROR              = -20, // Database error
     RPC_DESERIALIZATION_ERROR       = -22, // Error parsing or validating structure in raw format
-    RPC_SERVER_NOT_STARTED          = -18, // RPC server was not started (StartRPCThreads() not called)
+    RPC_TRANSACTION_ERROR           = -25, // General error during transaction submission
+    RPC_TRANSACTION_REJECTED        = -26, // Transaction was rejected by network rules
+    RPC_TRANSACTION_ALREADY_IN_CHAIN= -27, // Transaction already in chain
 
     // P2P client errors
     RPC_CLIENT_NOT_CONNECTED        = -9,  // Bitcoin is not connected
@@ -101,11 +103,27 @@ public:
     }
     bool connect(const std::string& server, const std::string& port)
     {
-        boost::asio::ip::tcp::resolver resolver(stream.get_io_service());
-        boost::asio::ip::tcp::resolver::query query(server.c_str(), port.c_str());
-        boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-        boost::asio::ip::tcp::resolver::iterator end;
+        using namespace boost::asio::ip;
+        tcp::resolver resolver(stream.get_io_service());
+        tcp::resolver::iterator endpoint_iterator;
+#if BOOST_VERSION >= 104300
+        try {
+#endif
+            // The default query (flags address_configured) tries IPv6 if
+            // non-localhost IPv6 configured, and IPv4 if non-localhost IPv4
+            // configured.
+            tcp::resolver::query query(server.c_str(), port.c_str());
+            endpoint_iterator = resolver.resolve(query);
+#if BOOST_VERSION >= 104300
+        } catch(boost::system::system_error &e)
+        {
+            // If we at first don't succeed, try blanket lookup (IPv4+IPv6 independent of configured interfaces)
+            tcp::resolver::query query(server.c_str(), port.c_str(), resolver_query_base::flags());
+            endpoint_iterator = resolver.resolve(query);
+        }
+#endif
         boost::system::error_code error = boost::asio::error::host_not_found;
+        tcp::resolver::iterator end;
         while (error && endpoint_iterator != end)
         {
             stream.lowest_layer().close();

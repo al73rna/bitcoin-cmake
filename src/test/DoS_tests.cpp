@@ -1,10 +1,13 @@
+// Copyright (c) 2011-2014 The Bitcoin Core developers
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 //
 // Unit tests for denial-of-service detection/prevention code
 //
 
 
 
-#include "bignum.h"
 #include "keystore.h"
 #include "main.h"
 #include "net.h"
@@ -21,7 +24,6 @@
 // Tests this internal-to-main.cpp method:
 extern bool AddOrphanTx(const CTransaction& tx);
 extern unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans);
-extern void Misbehaving(NodeId nodeid, int howmuch);
 extern std::map<uint256, CTransaction> mapOrphanTransactions;
 extern std::map<uint256, std::set<uint256> > mapOrphanTransactionsByPrev;
 
@@ -103,9 +105,9 @@ static bool CheckNBits(unsigned int nbits1, int64_t time1, unsigned int nbits2, 
         return CheckNBits(nbits2, time2, nbits1, time1);
     int64_t deltaTime = time2-time1;
 
-    CBigNum required;
+    uint256 required;
     required.SetCompact(ComputeMinWork(nbits1, deltaTime));
-    CBigNum have;
+    uint256 have;
     have.SetCompact(nbits2);
     return (have <= required);
 }
