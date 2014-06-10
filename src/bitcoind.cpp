@@ -70,8 +70,14 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
             return false;
         }
-        ReadConfigFile(mapArgs, mapMultiArgs);
-        // Check for -testnet or -regtest parameter (TestNet() calls are only valid after this clause)
+        try
+        {
+            ReadConfigFile(mapArgs, mapMultiArgs);
+        } catch(std::exception &e) {
+            fprintf(stderr,"Error reading configuration file: %s\n", e.what());
+            return false;
+        }
+        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         if (!SelectParamsFromCommandLine()) {
             fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
             return false;
@@ -166,15 +172,10 @@ bool AppInit(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    bool fRet = false;
+    SetupEnvironment();
 
     // Connect bitcoind signal handlers
     noui_connect();
 
-    fRet = AppInit(argc, argv);
-
-    if (fRet && fDaemon)
-        return 0;
-
-    return (fRet ? 0 : 1);
+    return (AppInit(argc, argv) ? 0 : 1);
 }

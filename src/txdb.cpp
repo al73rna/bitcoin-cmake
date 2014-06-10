@@ -73,12 +73,6 @@ bool CBlockTreeDB::WriteBlockIndex(const CDiskBlockIndex& blockindex)
     return Write(make_pair('b', blockindex.GetBlockHash()), blockindex);
 }
 
-bool CBlockTreeDB::WriteBestInvalidWork(const CBigNum& bnBestInvalidWork)
-{
-    // Obsolete; only written for backward compatibility.
-    return Write('I', bnBestInvalidWork);
-}
-
 bool CBlockTreeDB::WriteBlockFileInfo(int nFile, const CBlockFileInfo &info) {
     return Write(make_pair('f', nFile), info);
 }
@@ -148,7 +142,7 @@ bool CCoinsViewDB::GetStats(CCoinsStats &stats) {
             }
             pcursor->Next();
         } catch (std::exception &e) {
-            return error("%s : Deserialize or I/O error - %s", __PRETTY_FUNCTION__, e.what());
+            return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
     delete pcursor;
@@ -226,7 +220,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 break; // if shutdown requested or finished loading block index
             }
         } catch (std::exception &e) {
-            return error("%s : Deserialize or I/O error - %s", __PRETTY_FUNCTION__, e.what());
+            return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
     delete pcursor;
