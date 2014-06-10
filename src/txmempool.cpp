@@ -335,6 +335,18 @@ CTxMemPool::CTxMemPool()
     // of transactions in the pool
     fSanityCheck = false;
     nTransactionsUpdated = 0;
+
+    // 25 blocks is a compromise between using a lot of disk/memory and
+    // trying to give accurate estimates to people who might be willing
+    // to wait a day or two to save a fraction of a penny in fees.
+    // Confirmation times for very-low-fee transactions that take more
+    // than an hour or three to confirm are highly variable.
+    minerPolicyEstimator = new CMinerPolicyEstimator(25);
+}
+
+CTxMemPool::~CTxMemPool()
+{
+    delete minerPolicyEstimator;
 }
 
 void CTxMemPool::pruneSpent(const uint256 &hashTx, CCoins &coins)
