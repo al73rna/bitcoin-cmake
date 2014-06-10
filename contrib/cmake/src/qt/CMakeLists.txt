@@ -33,6 +33,7 @@ set(LIB_HEADERS
     overviewpage.h
     paymentrequestplus.h
     paymentserver.h
+    peertablemodel.h
     qvalidatedlineedit.h
     qvaluecombobox.h
     receivecoinsdialog.h
@@ -55,6 +56,7 @@ set(LIB_HEADERS
     walletmodel.h
     walletmodeltransaction.h
     walletview.h
+    winshutdownmonitor.h
 )
 
 set(LIB_SOURCES 
@@ -81,6 +83,7 @@ set(LIB_SOURCES
     overviewpage.cpp
     paymentrequestplus.cpp
     paymentserver.cpp
+    peertablemodel.cpp
     qvalidatedlineedit.cpp
     qvaluecombobox.cpp
     receivecoinsdialog.cpp
@@ -103,6 +106,7 @@ set(LIB_SOURCES
     walletmodel.cpp
     walletmodeltransaction.cpp
     walletview.cpp
+    winshutdownmonitor.cpp
 )
 
 set(DIR_SOURCES)

@@ -11,7 +11,6 @@ set(LIB_HEADERS
     alert.h
     allocators.h
     base58.h
-    bignum.h
     coins.h
     bloom.h
     chainparams.h
@@ -94,6 +93,10 @@ set(LIB_SOURCES
     wallet.cpp
     walletdb.cpp
     )
+
+if(GLIBC_BACK_COMPAT)
+    list(APPEND ${LIB_SOURCES} compat/glibc_compat.cpp compat/glibcxx_compat.cpp)
+endif()
 
 set(DIR_SOURCES)
 foreach(file ${LIB_SOURCES})

@@ -64,6 +64,8 @@ string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_
 # doesn't seem to define them without manual intervention.
 add_definitions( "-D__STDC_FORMAT_MACROS" )
 
+option(GLIBC_BACK_COMPAT "Enable backwards compatibility with glibc and libstdc++" OFF)
+
 # alert.cpp requires pthreads directly?
 find_package(Threads REQUIRED)
 find_package(BDB REQUIRED)
@@ -255,6 +257,23 @@ endif()
 #  if test x$use_tests$have_qt_test = xyesyes; then
 #    BUILD_TEST_QT="test"
 #  fi
+#fi
+
+# TODO: FDELT_TYPE propagated to bitcoin-config.h.cmake:
+#
+#if test x$use_glibc_compat != xno; then
+#
+#  #__fdelt_chk's params and return type have changed from long unsigned int to long int.
+#  # See which one is present here.
+#  AC_MSG_CHECKING(__fdelt_chk type)
+#  AC_TRY_COMPILE([#define __USE_FORTIFY_LEVEL 2
+#                  #include <sys/select.h>
+#     extern "C" long unsigned int __fdelt_warn(long unsigned int);],[],
+#    [ fdelt_type="long unsigned int"],
+#    [ fdelt_type="long int"])
+#  AC_MSG_RESULT($fdelt_type)
+#  AC_DEFINE_UNQUOTED(FDELT_TYPE, $fdelt_type,[parameter and return value type for __fdelt_chk])
+#
 #fi
 
 add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
