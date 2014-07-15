@@ -139,13 +139,16 @@ add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/locale
 # directory to allow rcc to get the relative paths correct.
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin.qrc DESTINATION
           ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin_locale.qrc DESTINATION
+          ${CMAKE_CURRENT_BINARY_DIR})
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res DESTINATION
           ${CMAKE_CURRENT_BINARY_DIR})
 
 # Generate intermediate Qt-specific files from .ui and .h
 qt4_wrap_ui(FORMS_HEADERS ${FORMS})
-qt4_add_resources(RESOURCES_RCC ${CMAKE_CURRENT_BINARY_DIR}/bitcoin.qrc)
+qt4_add_resources(RESOURCES_RCC ${CMAKE_CURRENT_BINARY_DIR}/bitcoin.qrc
+                                ${CMAKE_CURRENT_BINARY_DIR}/bitcoin_locale.qrc)
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 protobuf_generate_cpp(PROTOBUF_SOURCES PROTOBUF_HEADERS ${PROTOBUF_DEFS})

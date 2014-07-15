@@ -14,13 +14,19 @@ set(LIB_HEADERS
     coins.h
     bloom.h
     chainparams.h
+    chainparamsbase.h
     checkpoints.h
     checkqueue.h
     clientversion.h
     coincontrol.h
     compat.h
+    compat/sanity.h
     core.h
     crypter.h
+    crypto/common.h
+    crypto/ripemd160.h
+    crypto/sha1.h
+    crypto/sha2.h
     db.h
     hash.h
     init.h
@@ -33,6 +39,7 @@ set(LIB_HEADERS
     mruset.h
     netbase.h
     net.h
+    pow.h
     protocol.h
     rpcclient.h
     rpcprotocol.h
@@ -41,6 +48,7 @@ set(LIB_HEADERS
     serialize.h
     sync.h
     threadsafety.h
+    timedata.h
     tinyformat.h
     txdb.h
     txmempool.h
@@ -56,12 +64,19 @@ set(LIB_SOURCES
     addrman.cpp
     alert.cpp
     allocators.cpp
+    base58.cpp
     bloom.cpp
+    chainparamsbase.cpp
     chainparams.cpp
     checkpoints.cpp
     coins.cpp
+    compat/glibc_sanity.cpp
+    compat/glibcxx_sanity.cpp
     core.cpp
     crypter.cpp
+    crypto/ripemd160.cpp
+    crypto/sha1.cpp
+    crypto/sha2.cpp
     db.cpp
     hash.cpp
     init.cpp
@@ -73,7 +88,9 @@ set(LIB_SOURCES
     netbase.cpp
     net.cpp
     noui.cpp
+    pow.cpp
     protocol.cpp
+    random.cpp
     rpcblockchain.cpp
     rpcclient.cpp
     rpcdump.cpp
@@ -86,8 +103,10 @@ set(LIB_SOURCES
     rpcwallet.cpp
     script.cpp
     sync.cpp
+    timedata.cpp
     txdb.cpp
     txmempool.cpp
+    uint256.cpp
     util.cpp
     version.cpp
     wallet.cpp
@@ -115,13 +134,15 @@ add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
 
 # Generate bitcoin-config.h substituting config vars for include:
 configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/bitcoin-config.h.cmake
-               ${CMAKE_CURRENT_BINARY_DIR}/bitcoin-config.h @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/config/bitcoin-config.h @ONLY)
 add_definitions( "-DHAVE_CONFIG_H" )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} # for bitcoin-config.h
+                    ${CMAKE_CURRENT_BINARY_DIR}/config
                     ${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
                     ${OPENSSL_INCLUDE_DIRS}
+                    ${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers/memenv

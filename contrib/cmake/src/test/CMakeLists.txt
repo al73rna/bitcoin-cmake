@@ -17,6 +17,7 @@ set(TEST_SOURCES
     checkblock_tests.cpp
     Checkpoints_tests.cpp
     compress_tests.cpp
+    crypto_tests.cpp
     DoS_tests.cpp
     getarg_tests.cpp
     hash_tests.cpp
@@ -33,6 +34,7 @@ set(TEST_SOURCES
     #script_tests.cpp
     serialize_tests.cpp
     sighash_tests.cpp
+    skiplist_tests.cpp
     sigopcount_tests.cpp
     #transaction_tests.cpp
     uint256_tests.cpp
