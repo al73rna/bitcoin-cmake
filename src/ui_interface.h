@@ -21,7 +21,8 @@ enum ChangeType
 {
     CT_NEW,
     CT_UPDATED,
-    CT_DELETED
+    CT_DELETED,
+    CT_GOT_CONFLICT
 };
 
 /** Signals for UI communication. */
@@ -62,8 +63,6 @@ public:
 
         /** Force blocking, modal message box dialog (not just OS notification) */
         MODAL               = 0x10000000U,
-        /** Don't bring GUI to foreground. Use for messages during initialization */
-        NOSHOWGUI           = 0x20000000U,
 
         /** Predefined combinations for certain default usage cases */
         MSG_INFORMATION = ICON_INFORMATION,
