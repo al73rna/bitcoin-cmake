@@ -22,6 +22,7 @@ set(LIB_HEADERS
     compat.h
     compat/sanity.h
     core.h
+    core_io.h
     crypter.h
     crypto/common.h
     crypto/ripemd160.h
@@ -54,6 +55,7 @@ set(LIB_HEADERS
     txmempool.h
     ui_interface.h
     uint256.h
+    univalue/univalue.h
     util.h
     version.h
     walletdb.h
@@ -73,6 +75,8 @@ set(LIB_SOURCES
     compat/glibc_sanity.cpp
     compat/glibcxx_sanity.cpp
     core.cpp
+    core_read.cpp
+    core_write.cpp
     crypter.cpp
     crypto/ripemd160.cpp
     crypto/sha1.cpp
@@ -107,6 +111,9 @@ set(LIB_SOURCES
     txdb.cpp
     txmempool.cpp
     uint256.cpp
+    univalue/univalue.cpp
+    univalue/univalue_read.cpp
+    univalue/univalue_write.cpp
     util.cpp
     version.cpp
     wallet.cpp
@@ -166,6 +173,9 @@ target_link_libraries(bitcoind bitcoin)
 
 add_executable(bitcoin-cli ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-cli.cpp)
 target_link_libraries(bitcoin-cli bitcoin)
+
+add_executable(bitcoin-tx ${CMAKE_CURRENT_SOURCE_DIR}/bitcoin-tx.cpp)
+target_link_libraries(bitcoin-tx bitcoin)
 
 if(BUILD_QT)
     add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/qt
