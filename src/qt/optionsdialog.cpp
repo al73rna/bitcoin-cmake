@@ -21,6 +21,7 @@
 #include "wallet.h" // for CWallet::minTxFee
 #endif
 
+#include <boost/thread.hpp>
 #include <QDir>
 #include <QIntValidator>
 #include <QLocale>
@@ -185,7 +186,6 @@ void OptionsDialog::setMapper()
     /* Display */
     mapper->addMapping(ui->lang, OptionsModel::Language);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
-    mapper->addMapping(ui->displayAddresses, OptionsModel::DisplayAddresses);
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
 }
 

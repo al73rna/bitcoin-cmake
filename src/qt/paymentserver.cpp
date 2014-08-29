@@ -11,6 +11,7 @@
 
 #include "base58.h"
 #include "ui_interface.h"
+#include "util.h"
 #include "wallet.h"
 
 #include <cstdlib>
@@ -90,7 +91,7 @@ static QList<QString> savedPaymentRequests;
 
 static void ReportInvalidCertificate(const QSslCertificate& cert)
 {
-    qWarning() << "ReportInvalidCertificate : Payment server found an invalid certificate: " << cert.subjectInfo(QSslCertificate::CommonName);
+    qDebug() << "ReportInvalidCertificate : Payment server found an invalid certificate: " << cert.subjectInfo(QSslCertificate::CommonName);
 }
 
 //
@@ -424,7 +425,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
             }
             else
                 emit message(tr("URI handling"),
-                    tr("URI can not be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters."),
+                    tr("URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters."),
                     CClientUIInterface::ICON_WARNING);
 
             return;
@@ -438,7 +439,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         if (!readPaymentRequest(s, request))
         {
             emit message(tr("Payment request file handling"),
-                tr("Payment request file can not be read! This can be caused by an invalid payment request file."),
+                tr("Payment request file cannot be read! This can be caused by an invalid payment request file."),
                 CClientUIInterface::ICON_WARNING);
         }
         else if (processPaymentRequest(request, recipient))
@@ -663,7 +664,7 @@ void PaymentServer::netRequestFinished(QNetworkReply* reply)
         {
             qWarning() << "PaymentServer::netRequestFinished : Error parsing payment request";
             emit message(tr("Payment request error"),
-                tr("Payment request can not be parsed!"),
+                tr("Payment request cannot be parsed!"),
                 CClientUIInterface::MSG_ERROR);
         }
         else if (processPaymentRequest(request, recipient))

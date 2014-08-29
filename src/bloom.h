@@ -60,7 +60,7 @@ public:
     // It should generally always be a random value (and is largely only exposed for unit testing)
     // nFlags should be one of the BLOOM_UPDATE_* enums (not _MASK)
     CBloomFilter(unsigned int nElements, double nFPRate, unsigned int nTweak, unsigned char nFlagsIn);
-    CBloomFilter() : isFull(true) {}
+    CBloomFilter() : isFull(true), isEmpty(false), nHashFuncs(0), nTweak(0), nFlags(0) {}
 
     IMPLEMENT_SERIALIZE
     (
@@ -77,6 +77,8 @@ public:
     bool contains(const std::vector<unsigned char>& vKey) const;
     bool contains(const COutPoint& outpoint) const;
     bool contains(const uint256& hash) const;
+
+    void clear();
 
     // True if the size is <= MAX_BLOOM_FILTER_SIZE and the number of hash functions is <= MAX_HASH_FUNCS
     // (catch a filter which was just deserialized which was too big)

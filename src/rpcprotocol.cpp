@@ -6,6 +6,10 @@
 #include "rpcprotocol.h"
 
 #include "util.h"
+#include "tinyformat.h"
+#include "utilstrencodings.h"
+#include "utiltime.h"
+#include "version.h"
 
 #include <stdint.h>
 
@@ -93,8 +97,7 @@ string HTTPError(int nStatus, bool keepalive, bool headersOnly)
                      headersOnly, "text/plain");
 }
 
-string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
-                 bool headersOnly, const char *contentType)
+string HTTPReplyHeader(int nStatus, bool keepalive, size_t contentLength, const char *contentType)
 {
     return strprintf(
             "HTTP/1.1 %d %s\r\n"
@@ -103,17 +106,25 @@ string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
             "Content-Length: %u\r\n"
             "Content-Type: %s\r\n"
             "Server: bitcoin-json-rpc/%s\r\n"
-            "\r\n"
-            "%s",
+            "\r\n",
         nStatus,
         httpStatusDescription(nStatus),
         rfc1123Time(),
         keepalive ? "keep-alive" : "close",
-        (headersOnly ? 0 : strMsg.size()),
+        contentLength,
         contentType,
-        FormatFullVersion(),
-        (headersOnly ? "" : strMsg.c_str())
-        );
+        FormatFullVersion());
+}
+
+string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
+                 bool headersOnly, const char *contentType)
+{
+    if (headersOnly)
+    {
+        return HTTPReplyHeader(nStatus, keepalive, 0, contentType);
+    } else {
+        return HTTPReplyHeader(nStatus, keepalive, strMsg.size(), contentType) + strMsg;
+    }
 }
 
 bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int &proto,
@@ -194,14 +205,14 @@ int ReadHTTPHeaders(std::basic_istream<char>& stream, map<string, string>& mapHe
 
 int ReadHTTPMessage(std::basic_istream<char>& stream, map<string,
                     string>& mapHeadersRet, string& strMessageRet,
-                    int nProto)
+                    int nProto, size_t max_size)
 {
     mapHeadersRet.clear();
     strMessageRet = "";
 
     // Read header
     int nLen = ReadHTTPHeaders(stream, mapHeadersRet);
-    if (nLen < 0 || nLen > (int)MAX_SIZE)
+    if (nLen < 0 || (size_t)nLen > max_size)
         return HTTP_INTERNAL_SERVER_ERROR;
 
     // Read message

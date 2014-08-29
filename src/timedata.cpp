@@ -8,6 +8,7 @@
 #include "sync.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "utilstrencodings.h"
 
 #include <boost/foreach.hpp>
 
@@ -33,6 +34,11 @@ int64_t GetTimeOffset()
 int64_t GetAdjustedTime()
 {
     return GetTime() + GetTimeOffset();
+}
+
+static int64_t abs64(int64_t n)
+{
+    return (n >= 0 ? n : -n);
 }
 
 void AddTimeData(const CNetAddr& ip, int64_t nTime)
@@ -92,7 +98,7 @@ void AddTimeData(const CNetAddr& ip, int64_t nTime)
                 if (!fMatch)
                 {
                     fDone = true;
-                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong Bitcoin will not work properly.");
+                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong Bitcoin Core will not work properly.");
                     strMiscWarning = strMessage;
                     LogPrintf("*** %s\n", strMessage);
                     uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_WARNING);
