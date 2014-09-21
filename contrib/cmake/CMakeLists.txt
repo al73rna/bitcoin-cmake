@@ -1,3 +1,14 @@
+cmake_minimum_required(VERSION 2.8)
+project(bitcoin)
+
+set(MAJOR_VERSION 0)
+set(MINOR_VERSION 9)
+set(RELEASE_VERSION 99)
+set(BUILD_VERSION 0)
+set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
+
+set(COPYRIGHT_YEAR "2013")
+
 
 # Save current directory path of this CMakeLists.txt into CONTRIB_SOURCE_DIR 
 # and overwrite CMAKE_*_SOURCE_DIR with the path to the actual source. This 
@@ -9,16 +20,6 @@ set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
        ${CMAKE_CURRENT_SOURCE_DIR})
 
-cmake_minimum_required(VERSION 2.8)
-project(bitcoin)
-
-set(MAJOR_VERSION 0)
-set(MINOR_VERSION 9)
-set(RELEASE_VERSION 99)
-set(BUILD_VERSION 0)
-
-set(COPYRIGHT_YEAR "2013")
-
 
 #-----------------------------------------------------------------------------
 # Third party libraries
@@ -26,7 +27,7 @@ set(COPYRIGHT_YEAR "2013")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CONTRIB_SOURCE_DIR}/modules)
 INCLUDE(UsePkgConfig)
 
-find_package(Threads REQUIRED) # alert.cpp requires pthreads directly? lclclclclclclclclclclclclclclcl
+find_package(Threads REQUIRED) # alert.cpp requires pthreads directly?
 find_package(BDB REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options REQUIRED)
@@ -47,73 +48,35 @@ endif()
 
 find_package(Miniupnpc)
 
+# Check if struct sockaddr_in6 contains sin6
+include(CheckStructHasMember)
+CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
+
+if(BUILD_QT AND QRENCODE_FOUND)
+    set(QRENCODE_DEPS_FOUND TRUE)
+else()
+    set(QRENCODE_DEPS_FOUND FALSE)
+endif()
+
+
 #-----------------------------------------------------------------------------
 # Options for building
 
 option(BUILD_VERBOSE       "Verbose build output." ON)
 option(ENABLE_TESTS        "Compile and enable unit tests." FALSE)
+option(BUILD_DOCUMENTATION "Build the Doxygen documentation." ON)
 option(ENABLE_WALLET       "Enable wallet feature,)" ON)
 option(GLIBC_BACK_COMPAT   "Enable backwards compatibility with glibc and libstdc++" OFF)
-option(BUILD_QT            "Enable bitcoin-qt GUI" ${HAVE_BITCOINQT_DEPS})
+option(BUILD_QT            "Build bitcoin-qt GUI" ${HAVE_BITCOINQT_DEPS})
 option(USE_UPNP            "Whether UPnP support should be available or not." ${MINIUPNP_FOUND})
 option(USE_UPNP_DEFAULT    "UPnP is enabled on startup" ${MINIUPNP_FOUND})
+option(ENABLE_IPV6         "Enable use of IPv6." ${HAVE_IPV6})
+option(USE_QRCODE          "Enable QR code support" ${QRENCODE_DEPS_FOUND})
+option(USE_DBUS            "Enable DBus support" ${QT_QTDBUS_FOUND})
 
 if(BUILD_VERBOSE)
-  set(CMAKE_VERBOSE_MAKEFILE true)
+   set(CMAKE_VERBOSE_MAKEFILE true)
 endif()
-
-
-
-set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
-if(CLIENT_VERSION_IS_RELEASE)
-    # I don't want to modify source files to make this cleaner, so I'm
-    # explicitly defining to zero or one.
-    # See 'src/bitcoin-config.h.in' for usage.
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 1)
-else()
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 0)
-endif()
-
-
-
-
-
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# Remove -DNDEBUG from release builds because src/main.cpp:30
-# requires assertions to always be enabled.
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
-
-
-
-
-#-----------------------------------------------------------------------------
-# Source Definitions
-
-set(CLIENT_VERSION_MAJOR ${MAJOR_VERSION})
-set(CLIENT_VERSION_MINOR ${MINOR_VERSION})
-set(CLIENT_VERSION_RELEASE ${RELEASE_VERSION})
-set(CLIENT_VERSION_REVISION ${RELEASE_VERSION})
-set(CLIENT_VERSION_BUILD ${BUILD_VERSION})
-
-set(PACKAGE bitcoin)
-set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
-set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
-set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
-set(prefix ${CMAKE_INSTALL_PREFIX})
-
-# This is probably a hack to get PRId64 defines from <inttypes.h> which 
-# doesn't seem to define them without manual intervention.
-add_definitions( "-D__STDC_FORMAT_MACROS" )
-
 
 if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
     message(FATAL_ERROR "BUILD_QT was requested but there are unmet dependencies:")
@@ -133,6 +96,7 @@ endif()
 if(USE_UPNP AND NOT MINIUPNP_FOUND)
     message(FATAL_ERROR "UPNP Requested but miniupnpc library not found.")
 endif()
+
 if(USE_UPNP_DEFAULT AND NOT USE_UPNP)
     message(STATUS "Implicitly disabling USE_UPNP_DEFAULT due to USE_UPNP not being enabled.")
     set(USE_UPNP_DEFAULT OFF)
@@ -143,11 +107,6 @@ else()
     set(UPNP_SETTING "0")
 endif()
 
-# Check if struct sockaddr_in6 contains sin6
-include(CheckStructHasMember)
-CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
-
-option(ENABLE_IPV6 "Enable use of IPv6. (default is yes if supported)" ${HAVE_IPV6})
 if(ENABLE_IPV6 AND NOT HAVE_IPV6)
     message(FATAL_ERROR "USE_IPV6 requested but unable to find development support.")
 endif()
@@ -157,17 +116,10 @@ else()
     set(USE_IPV6 0)
 endif()
 
-if(BUILD_QT AND QRENCODE_FOUND)
-    set(QRENCODE_DEPS_FOUND TRUE)
-else()
-    set(QRENCODE_DEPS_FOUND FALSE)
-endif()
-option(USE_QRCODE "Enable QR code support (default is yes if qt is enabled and libqrencode is found)" ${QRENCODE_DEPS_FOUND})
 if(USE_QRCODE AND NOT QRENCODE_DEPS_FOUND)
     message(FATAL_ERROR "USE_QRCODE requested but unable to find qt or libqrencode dependencies.")
 endif()
 
-option(USE_DBUS "Enable DBus support (default is yes if qt is enabled and QtDbus is found)" ${QT_QTDBUS_FOUND})
 if(USE_DBUS)
     if(NOT BUILD_QT)
         message(FATAL_ERROR "USE_DBUS requires BUILD_QT to be set.")
@@ -176,6 +128,88 @@ if(USE_DBUS)
         message(FATAL_ERROR "USE_DBUS requested but QtDbus not found.")
     endif()
 endif()
+
+
+
+
+#-----------------------------------------------------------------------------
+# Print system information and build options
+
+message(STATUS "General -------------------------------------")
+message(STATUS "Bitcoin version:        ${VERSION}")
+message(STATUS "CMake version:          ${CMAKE_VERSION}")
+message(STATUS "System:                 ${CMAKE_SYSTEM}")
+message(STATUS "Processor:              ${CMAKE_SYSTEM_PROCESSOR}")
+
+message(STATUS "Verbose:                ${BUILD_VERBOSE}")
+message(STATUS "Testing:                ${ENABLE_TESTS}")
+message(STATUS "Documentation:          ${BUILD_DOCUMENTATION}")
+
+message(STATUS "Packaging -----------------------------------")
+message(STATUS "Build RPM:              ${RPM}")
+message(STATUS "Build DEB:              ${DEB}")
+
+message(STATUS "Build Options -- ----------------------------")
+message(STATUS "Wallet feature:         ${ENABLE_WALLET}")
+message(STATUS "bitcoin-qt GUI:         ${BUILD_QT}")
+message(STATUS "UPnP:                   ${USE_UPNP}")
+message(STATUS "UPnP on startup:        ${USE_UPNP_DEFAULT}")
+message(STATUS "IPv6:                   ${ENABLE_IPV6}")
+message(STATUS "QR code:                ${USE_QRCODE}")
+message(STATUS "DBUS:                   ${USE_DBUS}")
+
+message(STATUS "Backwards compatibility with glibc and libstdc++: ${GLIBC_BACK_COMPAT}")
+
+
+#-----------------------------------------------------------------------------
+# Source Definitions
+
+set(CLIENT_VERSION_MAJOR ${MAJOR_VERSION})
+set(CLIENT_VERSION_MINOR ${MINOR_VERSION})
+set(CLIENT_VERSION_RELEASE ${RELEASE_VERSION})
+set(CLIENT_VERSION_REVISION ${RELEASE_VERSION})
+set(CLIENT_VERSION_BUILD ${BUILD_VERSION})
+
+set(PACKAGE bitcoin)
+set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
+set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
+set(prefix ${CMAKE_INSTALL_PREFIX})
+
+
+# This is probably a hack to get PRId64 defines from <inttypes.h> which
+# doesn't seem to define them without manual intervention.
+add_definitions( "-D__STDC_FORMAT_MACROS" )
+
+set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
+if(CLIENT_VERSION_IS_RELEASE)
+    # I don't want to modify source files to make this cleaner, so I'm
+    # explicitly defining to zero or one.
+    # See 'src/bitcoin-config.h.in' for usage.
+    set(CLIENT_VERSION_IS_RELEASE_SETTING 1)
+else()
+    set(CLIENT_VERSION_IS_RELEASE_SETTING 0)
+endif()
+
+# Remove -DNDEBUG from release builds because src/main.cpp:30
+# requires assertions to always be enabled.
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+
+
+#-----------------------------------------------------------------------------
+# Collect all binaries into subdirectory
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+#-----------------------------------------------------------------------------
+# compiler options
 
 # missing AX_CHECK_LINK_FLAG() from autoconf.. so workaround:
 include(CheckCCompilerFlag)
@@ -255,14 +289,16 @@ add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
 #-----------------------------------------------------------------------------
 # Build Documentation
 
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/doc/Doxyfile.in.cmake
-	           ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-    add_custom_target(doc ${DOXYGEN_EXECUTABLE}
-                      ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-		      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		      COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
+if(BUILD_DOCUMENTATION)
+    find_package(Doxygen)
+    if(DOXYGEN_FOUND)
+        configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/doc/Doxyfile.in.cmake
+                    ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+        add_custom_target(doc ${DOXYGEN_EXECUTABLE}
+                        ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
+    endif()
 endif()
 
 
