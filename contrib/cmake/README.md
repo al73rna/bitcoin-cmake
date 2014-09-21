@@ -22,16 +22,24 @@ Optional dependencies:
   - QRencode
   - Doxygen
 
-Linux Build Instructions:
+
+
+**Build Instructions**
+----------
+
+**Linux:**
+
+One-liner:
+mkdir build && cd build && cmake ../contrib/cmake && make -j2
 
 1. Create a directory where you want the binaries and libs to compile to:
     $ mkdir -f ~/tmp && mkdir ~/tmp/bitcoin-cmake
     $ cd ~/tmp/bitcoin-cmake
 
 2. Run CMake with path to this contrib directory from your build directory:
-    $ ccmake ~/src/bitcoin-qt/contrib/cmake
+    $ ccmake ~/contrib/cmake
     alternatively:
-    $ cmake-gui ~/src/bitcoin-qt/contrib/cmake
+    $ cmake-gui ~/contrib/cmake
 
 3. Select 'c' to configure or click the Configure button.
 
@@ -49,7 +57,8 @@ Linux Build Instructions:
 8. Install to desired path (optional):
     $ make install
 
-Windows Build Instructions:
+
+**Windows**
 
 1. TODO
 
