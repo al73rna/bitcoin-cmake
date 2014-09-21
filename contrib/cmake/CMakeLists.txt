@@ -3,7 +3,7 @@ project(bitcoin)
 
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 9)
-set(RELEASE_VERSION 99)
+set(REVISION_VERSION 99)
 set(BUILD_VERSION 0)
 set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
 
@@ -164,31 +164,56 @@ message(STATUS "Backwards compatibility with glibc and libstdc++: ${GLIBC_BACK_C
 #-----------------------------------------------------------------------------
 # Source Definitions
 
-set(CLIENT_VERSION_MAJOR ${MAJOR_VERSION})
-set(CLIENT_VERSION_MINOR ${MINOR_VERSION})
-set(CLIENT_VERSION_RELEASE ${RELEASE_VERSION})
-set(CLIENT_VERSION_REVISION ${RELEASE_VERSION})
-set(CLIENT_VERSION_BUILD ${BUILD_VERSION})
+add_definitions(-DCLIENT_VERSION_MAJOR=${MAJOR_VERSION})
+add_definitions(-DCLIENT_VERSION_MINOR=${MINOR_VERSION})
+add_definitions(-DCLIENT_VERSION_REVISION=${REVISION_VERSION})
+add_definitions(-DCLIENT_VERSION_BUILD=${BUILD_VERSION})
+add_definitions(-DCOPYRIGHT_YEAR="${COPYRIGHT_YEAR}")
 
 set(PACKAGE bitcoin)
 set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
 set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
 set(prefix ${CMAKE_INSTALL_PREFIX})
 
+set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
+if(CLIENT_VERSION_IS_RELEASE)
+    add_definitions(-DCLIENT_VERSION_IS_RELEASE=1)
+else()
+    add_definitions(-DCLIENT_VERSION_IS_RELEASE=0)
+endif()
+
+if(ENABLE_WALLET)
+    add_definitions(-DENABLE_WALLET)
+endif()
+
+if(MSG_NOSIGNAL)
+    add_definitions(-DMSG_NOSIGNAL)
+endif()
+
+if(HAVE_MSG_NOSIGNAL)
+    add_definitions(-DHAVE_MSG_NOSIGNAL)
+endif()
+
+if(USE_UPNP_DEFAULT)
+    add_definitions(-DUSE_UPNP)
+endif()
+
+if(ENABLE_IPV6)
+    add_definitions(-DUSE_IPV6)
+endif()
+
+if(USE_QRCODE)
+    add_definitions(-DUSE_QRCODE)
+endif()
+
+if(USE_DBUS)
+    add_definitions(-DUSE_DBUS)
+endif()
+
 
 # This is probably a hack to get PRId64 defines from <inttypes.h> which
 # doesn't seem to define them without manual intervention.
-add_definitions( "-D__STDC_FORMAT_MACROS" )
-
-set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
-if(CLIENT_VERSION_IS_RELEASE)
-    # I don't want to modify source files to make this cleaner, so I'm
-    # explicitly defining to zero or one.
-    # See 'src/bitcoin-config.h.in' for usage.
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 1)
-else()
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 0)
-endif()
+add_definitions(-D__STDC_FORMAT_MACROS)
 
 # Remove -DNDEBUG from release builds because src/main.cpp:30
 # requires assertions to always be enabled.
