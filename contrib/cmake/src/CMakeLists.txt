@@ -15,6 +15,7 @@ set(LIB_HEADERS
     bloom.h
     chainparams.h
     chainparamsbase.h
+    chainparamsseeds.h
     checkpoints.h
     checkqueue.h
     clientversion.h
@@ -56,7 +57,11 @@ set(LIB_HEADERS
     ui_interface.h
     uint256.h
     univalue/univalue.h
+    univalue/univalue_escapes.h
     util.h
+    utilmoneystr.h
+    utilstrencodings.h
+    utiltime.h
     version.h
     walletdb.h
     wallet.h
@@ -111,10 +116,14 @@ set(LIB_SOURCES
     txdb.cpp
     txmempool.cpp
     uint256.cpp
+    univalue/gen.cpp
     univalue/univalue.cpp
     univalue/univalue_read.cpp
     univalue/univalue_write.cpp
     util.cpp
+    utilmoneystr.cpp
+    utilstrencodings.cpp
+    utiltime.cpp
     version.cpp
     wallet.cpp
     walletdb.cpp
