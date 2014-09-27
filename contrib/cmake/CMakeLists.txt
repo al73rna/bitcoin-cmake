@@ -1,3 +1,14 @@
+cmake_minimum_required(VERSION 2.8)
+project(bitcoin)
+
+set(MAJOR_VERSION 0)
+set(MINOR_VERSION 9)
+set(REVISION_VERSION 99)
+set(BUILD_VERSION 0)
+set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
+
+set(COPYRIGHT_YEAR "2013")
+
 
 # Save current directory path of this CMakeLists.txt into CONTRIB_SOURCE_DIR 
 # and overwrite CMAKE_*_SOURCE_DIR with the path to the actual source. This 
@@ -9,84 +20,25 @@ set(CONTRIB_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
        ${CMAKE_CURRENT_SOURCE_DIR})
 
-cmake_minimum_required(VERSION 2.8) # Needed for file(COPY ...)
 
-project(bitcoin)
-
-enable_testing()
-
-set(MAJOR_VERSION 0)
-set(MINOR_VERSION 9)
-set(RELEASE_VERSION 99)
-set(BUILD_VERSION 0)
-
-# Repeat for bitcoin-config.h
-set(CLIENT_VERSION_MAJOR ${MAJOR_VERSION})
-set(CLIENT_VERSION_MINOR ${MINOR_VERSION})
-set(CLIENT_VERSION_RELEASE ${RELEASE_VERSION})
-set(CLIENT_VERSION_REVISION ${RELEASE_VERSION}) # src/version.h expects this.
-set(CLIENT_VERSION_BUILD ${BUILD_VERSION})
-
-set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
-if(CLIENT_VERSION_IS_RELEASE)
-    # I don't want to modify source files to make this cleaner, so I'm
-    # explicitly defining to zero or one.
-    # See 'src/bitcoin-config.h.in' for usage.
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 1)
-else()
-    set(CLIENT_VERSION_IS_RELEASE_SETTING 0)
-endif()
-
-set(PACKAGE bitcoin)
-set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
-set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
-set(COPYRIGHT_YEAR "2013")
-set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
-set(prefix ${CMAKE_INSTALL_PREFIX})
+#-----------------------------------------------------------------------------
+# Third party libraries
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CONTRIB_SOURCE_DIR}/modules)
 INCLUDE(UsePkgConfig)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# Remove -DNDEBUG from release builds because src/main.cpp:30
-# requires assertions to always be enabled.
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
-string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
-
-# This is probably a hack to get PRId64 defines from <inttypes.h> which 
-# doesn't seem to define them without manual intervention.
-add_definitions( "-D__STDC_FORMAT_MACROS" )
-
-option(GLIBC_BACK_COMPAT "Enable backwards compatibility with glibc and libstdc++" OFF)
-
-# alert.cpp requires pthreads directly?
-find_package(Threads REQUIRED)
+find_package(Threads REQUIRED) # alert.cpp requires pthreads directly?
 find_package(BDB REQUIRED)
-
-find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options
-	                             unit_test_framework)
-if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Could not locate Boost.")
-endif()
+find_package(OpenSSL REQUIRED)
+find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options REQUIRED)
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-find_package(OpenSSL)
-if(NOT OPENSSL_FOUND)
-    message(FATAL_ERROR "Could not locate OpenSSL.")
-endif()
-
 # bitcoin-qt dependencies (4.4.3 arbitrarily set via docs):
 find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork QtDbus)
 find_package(Protobuf)
+find_package(QRencode)
 
 if(QT_FOUND AND PROTOBUF_FOUND)
     set(HAVE_BITCOINQT_DEPS TRUE)
@@ -94,9 +46,38 @@ else()
     set(HAVE_BITCOINQT_DEPS FALSE)
 endif()
 
-option(ENABLE_WALLET "Enable wallet feature. (default is yes)" ON)
+find_package(Miniupnpc)
 
-option(BUILD_QT "Enable bitcoin-qt GUI (default is yes if deps are satisfied)" ${HAVE_BITCOINQT_DEPS})
+# Check if struct sockaddr_in6 contains sin6
+include(CheckStructHasMember)
+CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
+
+if(BUILD_QT AND QRENCODE_FOUND)
+    set(QRENCODE_DEPS_FOUND TRUE)
+else()
+    set(QRENCODE_DEPS_FOUND FALSE)
+endif()
+
+
+#-----------------------------------------------------------------------------
+# Options for building
+
+option(BUILD_VERBOSE       "Verbose build output." ON)
+option(ENABLE_TESTS        "Compile and enable unit tests." FALSE)
+option(BUILD_DOCUMENTATION "Build the Doxygen documentation." ON)
+option(ENABLE_WALLET       "Enable wallet feature,)" ON)
+option(GLIBC_BACK_COMPAT   "Enable backwards compatibility with glibc and libstdc++" OFF)
+option(BUILD_QT            "Build bitcoin-qt GUI" ${HAVE_BITCOINQT_DEPS})
+option(USE_UPNP            "Whether UPnP support should be available or not." ${MINIUPNP_FOUND})
+option(USE_UPNP_DEFAULT    "UPnP is enabled on startup" ${MINIUPNP_FOUND})
+option(ENABLE_IPV6         "Enable use of IPv6." ${HAVE_IPV6})
+option(USE_QRCODE          "Enable QR code support" ${QRENCODE_DEPS_FOUND})
+option(USE_DBUS            "Enable DBus support" ${QT_QTDBUS_FOUND})
+
+if(BUILD_VERBOSE)
+   set(CMAKE_VERBOSE_MAKEFILE true)
+endif()
+
 if(BUILD_QT AND NOT HAVE_BITCOINQT_DEPS)
     message(FATAL_ERROR "BUILD_QT was requested but there are unmet dependencies:")
     if(NOT QT_FOUND)
@@ -112,12 +93,10 @@ if(BUILD_QT AND NOT ENABLE_WALLET)
     set(ENABLE_WALLET ON)
 endif()
 
-find_package(Miniupnpc)
-option(USE_UPNP "Whether UPnP support should be available or not." ${MINIUPNP_FOUND})
-option(USE_UPNP_DEFAULT "Whether UPnP is enabled on startup (default is yes if libminiupnpc is found)" ${MINIUPNP_FOUND})
 if(USE_UPNP AND NOT MINIUPNP_FOUND)
     message(FATAL_ERROR "UPNP Requested but miniupnpc library not found.")
 endif()
+
 if(USE_UPNP_DEFAULT AND NOT USE_UPNP)
     message(STATUS "Implicitly disabling USE_UPNP_DEFAULT due to USE_UPNP not being enabled.")
     set(USE_UPNP_DEFAULT OFF)
@@ -128,11 +107,6 @@ else()
     set(UPNP_SETTING "0")
 endif()
 
-# Check if struct sockaddr_in6 contains sin6
-include(CheckStructHasMember)
-CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
-
-option(ENABLE_IPV6 "Enable use of IPv6. (default is yes if supported)" ${HAVE_IPV6})
 if(ENABLE_IPV6 AND NOT HAVE_IPV6)
     message(FATAL_ERROR "USE_IPV6 requested but unable to find development support.")
 endif()
@@ -142,18 +116,10 @@ else()
     set(USE_IPV6 0)
 endif()
 
-find_package(QRencode)
-if(BUILD_QT AND QRENCODE_FOUND)
-    set(QRENCODE_DEPS_FOUND TRUE)
-else()
-    set(QRENCODE_DEPS_FOUND FALSE)
-endif()
-option(USE_QRCODE "Enable QR code support (default is yes if qt is enabled and libqrencode is found)" ${QRENCODE_DEPS_FOUND})
 if(USE_QRCODE AND NOT QRENCODE_DEPS_FOUND)
     message(FATAL_ERROR "USE_QRCODE requested but unable to find qt or libqrencode dependencies.")
 endif()
 
-option(USE_DBUS "Enable DBus support (default is yes if qt is enabled and QtDbus is found)" ${QT_QTDBUS_FOUND})
 if(USE_DBUS)
     if(NOT BUILD_QT)
         message(FATAL_ERROR "USE_DBUS requires BUILD_QT to be set.")
@@ -162,6 +128,113 @@ if(USE_DBUS)
         message(FATAL_ERROR "USE_DBUS requested but QtDbus not found.")
     endif()
 endif()
+
+
+
+
+#-----------------------------------------------------------------------------
+# Print system information and build options
+
+message(STATUS "General -------------------------------------")
+message(STATUS "Bitcoin version:        ${VERSION}")
+message(STATUS "CMake version:          ${CMAKE_VERSION}")
+message(STATUS "System:                 ${CMAKE_SYSTEM}")
+message(STATUS "Processor:              ${CMAKE_SYSTEM_PROCESSOR}")
+
+message(STATUS "Verbose:                ${BUILD_VERBOSE}")
+message(STATUS "Testing:                ${ENABLE_TESTS}")
+message(STATUS "Documentation:          ${BUILD_DOCUMENTATION}")
+
+message(STATUS "Packaging -----------------------------------")
+message(STATUS "Build RPM:              ${RPM}")
+message(STATUS "Build DEB:              ${DEB}")
+
+message(STATUS "Build Options -- ----------------------------")
+message(STATUS "Wallet feature:         ${ENABLE_WALLET}")
+message(STATUS "bitcoin-qt GUI:         ${BUILD_QT}")
+message(STATUS "UPnP:                   ${USE_UPNP}")
+message(STATUS "UPnP on startup:        ${USE_UPNP_DEFAULT}")
+message(STATUS "IPv6:                   ${ENABLE_IPV6}")
+message(STATUS "QR code:                ${USE_QRCODE}")
+message(STATUS "DBUS:                   ${USE_DBUS}")
+
+message(STATUS "Backwards compatibility with glibc and libstdc++: ${GLIBC_BACK_COMPAT}")
+
+
+#-----------------------------------------------------------------------------
+# Source Definitions
+
+add_definitions(-DCLIENT_VERSION_MAJOR=${MAJOR_VERSION})
+add_definitions(-DCLIENT_VERSION_MINOR=${MINOR_VERSION})
+add_definitions(-DCLIENT_VERSION_REVISION=${REVISION_VERSION})
+add_definitions(-DCLIENT_VERSION_BUILD=${BUILD_VERSION})
+add_definitions(-DCOPYRIGHT_YEAR="${COPYRIGHT_YEAR}")
+
+set(PACKAGE bitcoin)
+set(host ${CMAKE_SYSTEM} ${CMAKE_SYSTEM_PROCESSOR})
+set(COPYRIGHT "Copyright (c) 2009-${COPYRIGHT_YEAR} Bitcoin Developers.  All Rights Reserved.")
+set(prefix ${CMAKE_INSTALL_PREFIX})
+
+set(CLIENT_VERSION_IS_RELEASE OFF CACHE BOOL "Set ON to consider this build to be of release quality.  This disables warning messages that say this build is still in development.")
+if(CLIENT_VERSION_IS_RELEASE)
+    add_definitions(-DCLIENT_VERSION_IS_RELEASE=1)
+else()
+    add_definitions(-DCLIENT_VERSION_IS_RELEASE=0)
+endif()
+
+if(ENABLE_WALLET)
+    add_definitions(-DENABLE_WALLET)
+endif()
+
+if(MSG_NOSIGNAL)
+    add_definitions(-DMSG_NOSIGNAL)
+endif()
+
+if(HAVE_MSG_NOSIGNAL)
+    add_definitions(-DHAVE_MSG_NOSIGNAL)
+endif()
+
+if(USE_UPNP_DEFAULT)
+    add_definitions(-DUSE_UPNP)
+endif()
+
+if(ENABLE_IPV6)
+    add_definitions(-DUSE_IPV6)
+endif()
+
+if(USE_QRCODE)
+    add_definitions(-DUSE_QRCODE)
+endif()
+
+if(USE_DBUS)
+    add_definitions(-DUSE_DBUS)
+endif()
+
+
+# This is probably a hack to get PRId64 defines from <inttypes.h> which
+# doesn't seem to define them without manual intervention.
+add_definitions(-D__STDC_FORMAT_MACROS)
+
+# Remove -DNDEBUG from release builds because src/main.cpp:30
+# requires assertions to always be enabled.
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
+string(REGEX REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+
+
+#-----------------------------------------------------------------------------
+# Collect all binaries into subdirectory
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+#-----------------------------------------------------------------------------
+# compiler options
 
 # missing AX_CHECK_LINK_FLAG() from autoconf.. so workaround:
 include(CheckCCompilerFlag)
@@ -220,7 +293,41 @@ if(UNIX)
 endif()
 
 
-# 
+#-----------------------------------------------------------------------------
+# Build Unit tests
+
+if(ENABLE_TESTS)
+    enable_testing()
+    find_package(Boost 1.45.0 COMPONENTS unit_test_framework)
+    message(STATUS "Tests temporarily disabled to avoid conversion of .json data files.")
+    SET(ENABLE_TESTS FALSE)
+endif()
+
+
+#-----------------------------------------------------------------------------
+# Build source
+
+add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
+                 ${CMAKE_CURRENT_BINARY_DIR}/src)
+
+
+#-----------------------------------------------------------------------------
+# Build Documentation
+
+if(BUILD_DOCUMENTATION)
+    find_package(Doxygen)
+    if(DOXYGEN_FOUND)
+        configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/doc/Doxyfile.in.cmake
+                    ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
+        add_custom_target(doc ${DOXYGEN_EXECUTABLE}
+                        ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
+    endif()
+endif()
+
+
+#-----------------------------------------------------------------------------
 # TODO: add rest of options for things in configure.ac
 #
 #AC_ARG_WITH([comparison-tool],
@@ -243,13 +350,6 @@ endif()
 #  [enable lcov testing (default is no)])],
 #  [use_lcov=yes],
 #  [use_lcov=no])
-
-
-option(ENABLE_TESTS "Compile and enable unit tests." FALSE)
-if(ENABLE_TESTS)
-    message(STATUS "Tests temporarily disabled to avoid conversion of .json data files.")
-    SET(ENABLE_TESTS FALSE)
-endif()
 
 #dnl these are only used when qt is enabled
 #if test x$use_qt = xyes; then
@@ -275,17 +375,3 @@ endif()
 #  AC_DEFINE_UNQUOTED(FDELT_TYPE, $fdelt_type,[parameter and return value type for __fdelt_chk])
 #
 #fi
-
-add_subdirectory(${CONTRIB_CURRENT_SOURCE_DIR}/src
-                 ${CMAKE_CURRENT_BINARY_DIR}/src)
-
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    configure_file(${CONTRIB_CURRENT_SOURCE_DIR}/doc/Doxyfile.in.cmake
-	           ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile @ONLY)
-    add_custom_target(doc ${DOXYGEN_EXECUTABLE}
-                      ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile
-		      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		      COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
-endif()
-
