@@ -190,3 +190,5 @@ if(ENABLE_TESTS)
                      ${CMAKE_CURRENT_BINARY_DIR}/test)
 endif()
 
+install(TARGETS bitcoind DESTINATION bin)
+

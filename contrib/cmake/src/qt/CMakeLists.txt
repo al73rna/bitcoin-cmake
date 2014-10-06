@@ -192,3 +192,4 @@ set_target_properties(bitcoin-qt PROPERTIES AUTOMOC TRUE)
 
 target_link_libraries(bitcoin-qt bitcoinqt)
 
+install(TARGETS bitcoin-qt DESTINATION bin)
