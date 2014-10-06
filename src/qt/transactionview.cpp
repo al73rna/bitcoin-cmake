@@ -304,7 +304,7 @@ void TransactionView::changedAmount(const QString &amount)
 {
     if(!transactionProxyModel)
         return;
-    qint64 amount_parsed = 0;
+    CAmount amount_parsed = 0;
     if(BitcoinUnits::parse(model->getOptionsModel()->getDisplayUnit(), amount, &amount_parsed))
     {
         transactionProxyModel->setMinAmount(amount_parsed);
@@ -331,7 +331,7 @@ void TransactionView::exportClicked()
     writer.setModel(transactionProxyModel);
     writer.addColumn(tr("Confirmed"), 0, TransactionTableModel::ConfirmedRole);
     if (model && model->haveWatchOnly())
-        writer.addColumn(tr("Watchonly"), TransactionTableModel::Watchonly);
+        writer.addColumn(tr("Watch-only"), TransactionTableModel::Watchonly);
     writer.addColumn(tr("Date"), 0, TransactionTableModel::DateRole);
     writer.addColumn(tr("Type"), TransactionTableModel::Type, Qt::EditRole);
     writer.addColumn(tr("Label"), 0, TransactionTableModel::LabelRole);

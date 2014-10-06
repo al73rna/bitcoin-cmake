@@ -7,8 +7,10 @@ define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, false)
 define(_COPYRIGHT_YEAR, 2014)
 AC_INIT([Bitcoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[info@bitcoin.org],[bitcoin])
-AC_CONFIG_AUX_DIR([src/build-aux])
-AC_CONFIG_MACRO_DIR([src/m4])
+AC_CONFIG_SRCDIR([src/main.cpp])
+AC_CONFIG_HEADERS([src/config/bitcoin-config.h])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([build-aux/m4])
 LT_INIT([disable-shared])
 AC_CANONICAL_HOST
 AH_TOP([#ifndef BITCOIN_CONFIG_H])
@@ -43,6 +45,30 @@ AM_MAINTAINER_MODE([enable])
 
 dnl make the compilation flags quiet unless V=1 is used
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+dnl Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXXCPP
+AC_PROG_INSTALL
+AC_PROG_OBJC
+AC_PROG_LN_S
+m4_ifdef([AC_PROG_OBJCXX],[AC_PROG_OBJCXX])
+AC_PROG_MKDIR_P
+AC_PROG_SED
+AC_PATH_TOOL(AR, ar)
+AC_PATH_TOOL(RANLIB, ranlib)
+AC_PATH_TOOL(STRIP, strip)
+AC_PATH_TOOL(GCOV, gcov)
+AC_PATH_PROG(LCOV, lcov)
+AC_PATH_PROG(JAVA, java)
+AC_PATH_PROG(GENHTML, genhtml)
+AC_PATH_PROG([GIT], [git])
+AC_PATH_PROG(CCACHE,ccache)
+AC_PATH_PROG(XGETTEXT,xgettext)
+AC_PATH_PROG(HEXDUMP,hexdump)
+PKG_PROG_PKG_CONFIG
 
 # Enable wallet
 AC_ARG_ENABLE([wallet],
@@ -115,34 +141,6 @@ AC_ARG_ENABLE([glibc-back-compat],
   [use_glibc_compat=no])
 
 AC_ARG_WITH([protoc-bindir],[AS_HELP_STRING([--with-protoc-bindir=BIN_DIR],[specify protoc bin path])], [protoc_bin_path=$withval], [])
-
-
-AC_CONFIG_SRCDIR([src])
-AC_CONFIG_HEADERS([src/config/bitcoin-config.h])
-
-dnl Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_CXXCPP
-AC_PROG_INSTALL
-AC_PROG_OBJC
-AC_PROG_LN_S
-m4_ifdef([AC_PROG_OBJCXX],[AC_PROG_OBJCXX])
-AC_PROG_MKDIR_P
-AC_PROG_SED
-AC_PATH_TOOL(AR, ar)
-AC_PATH_TOOL(RANLIB, ranlib)
-AC_PATH_TOOL(STRIP, strip)
-AC_PATH_TOOL(GCOV, gcov)
-AC_PATH_PROG(LCOV, lcov)
-AC_PATH_PROG(JAVA, java)
-AC_PATH_PROG(GENHTML, genhtml)
-AC_PATH_PROG([GIT], [git])
-AC_PATH_PROG(CCACHE,ccache)
-AC_PATH_PROG(XGETTEXT,xgettext)
-AC_PATH_PROG(HEXDUMP,hexdump)
-PKG_PROG_PKG_CONFIG
 
 # Enable debug 
 AC_ARG_ENABLE([debug],
@@ -242,12 +240,25 @@ case $host in
 
        AC_CHECK_PROG([BREW],brew, brew)
        if test x$BREW = xbrew; then
-         dnl add default homebrew paths
-         openssl_prefix=`$BREW --prefix openssl`
-         bdb_prefix=`$BREW --prefix berkeley-db4`
-         export PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-         CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
-         LIBS="$LIBS -L$bdb_prefix/lib"
+         dnl These Homebrew packages may be bottled, meaning that they won't be found
+         dnl in expected paths because they may conflict with system files. Ask
+         dnl Homebrew where each one is located, then adjust paths accordingly.
+         dnl It's safe to add these paths even if the functionality is disabled by
+         dnl the user (--without-wallet or --without-gui for example).
+
+         openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
+         bdb_prefix=`$BREW --prefix berkeley-db4 2>/dev/null`
+         qt5_prefix=`$BREW --prefix qt5 2>/dev/null`
+         if test x$openssl_prefix != x; then
+           export PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+         fi
+         if test x$bdb_prefix != x; then
+           CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
+           LIBS="$LIBS -L$bdb_prefix/lib"
+         fi
+         if test x$qt5_prefix != x; then
+           export PKG_CONFIG_PATH="$qt5_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+         fi
        fi
      else
        case $build_os in
@@ -337,12 +348,12 @@ if test x$use_glibc_compat != xno; then
   #__fdelt_chk's params and return type have changed from long unsigned int to long int.
   # See which one is present here.
   AC_MSG_CHECKING(__fdelt_chk type)
-  AC_TRY_COMPILE([#ifdef _FORTIFY_SOURCE
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef _FORTIFY_SOURCE
                     #undef _FORTIFY_SOURCE
                   #endif
                   #define _FORTIFY_SOURCE 2
                   #include <sys/select.h>
-     extern "C" long unsigned int __fdelt_warn(long unsigned int);],[],
+     extern "C" long unsigned int __fdelt_warn(long unsigned int);]],[[]])],
     [ fdelt_type="long unsigned int"],
     [ fdelt_type="long int"])
   AC_MSG_RESULT($fdelt_type)
@@ -394,8 +405,8 @@ AC_CHECK_DECLS([le32toh, le64toh, htole32, htole64, be32toh, be64toh, htobe32, h
 
 dnl Check for MSG_NOSIGNAL
 AC_MSG_CHECKING(for MSG_NOSIGNAL)
-AC_TRY_COMPILE([#include <sys/socket.h>],
- [ int f = MSG_NOSIGNAL; ],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/socket.h>]],
+ [[ int f = MSG_NOSIGNAL; ]])],
  [ AC_MSG_RESULT(yes); AC_DEFINE(HAVE_MSG_NOSIGNAL, 1,[Define this symbol if you have MSG_NOSIGNAL]) ],
  [ AC_MSG_RESULT(no)]
 )
@@ -537,16 +548,16 @@ TEMP_LIBS="$LIBS"
 LIBS="$BOOST_LIBS $BOOST_CHRONO_LIB $LIBS"
 TEMP_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/thread/thread.hpp>
   #include <boost/version.hpp>
-  ],[
+  ]],[[
   #if BOOST_VERSION >= 105000 && (!defined(BOOST_HAS_NANOSLEEP) || BOOST_VERSION >= 105200)
       boost::this_thread::sleep_for(boost::chrono::milliseconds(0));
   #else
    choke me
   #endif
-  ],
+  ]])],
   [boost_sleep=yes; BOOST_LIBS="$BOOST_LIBS $BOOST_CHRONO_LIB";
      AC_DEFINE(HAVE_WORKING_BOOST_SLEEP_FOR, 1, [Define this symbol if boost sleep_for works])],
   [boost_sleep=no])
@@ -559,17 +570,17 @@ TEMP_LIBS="$LIBS"
 LIBS="$BOOST_LIBS $LIBS"
 TEMP_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/version.hpp>
   #include <boost/thread.hpp>
   #include <boost/date_time/posix_time/posix_time_types.hpp>
-  ],[
+  ]],[[
   #if BOOST_VERSION <= 105600
       boost::this_thread::sleep(boost::posix_time::milliseconds(0));
   #else
    choke me
   #endif
-  ],
+  ]])],
   [boost_sleep=yes; AC_DEFINE(HAVE_WORKING_BOOST_SLEEP, 1, [Define this symbol if boost sleep works])],
   [boost_sleep=no])
 LIBS="$TEMP_LIBS"
@@ -690,7 +701,7 @@ else
     AC_MSG_RESULT($use_upnp_default)
     AC_DEFINE_UNQUOTED([USE_UPNP],[$upnp_setting],[UPnP support not compiled if undefined, otherwise value (0 or 1) determines default state])
     if test x$TARGET_OS = xwindows; then
-      CPPFLAGS="$CPPFLAGS -DSTATICLIB"
+      MINIUPNPC_CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB"
     fi
   else
     AC_MSG_RESULT(no)
@@ -794,7 +805,8 @@ AC_SUBST(LEVELDB_TARGET_FLAGS)
 AC_SUBST(BUILD_TEST)
 AC_SUBST(BUILD_QT)
 AC_SUBST(BUILD_TEST_QT)
-AC_CONFIG_FILES([Makefile src/Makefile share/setup.nsi share/qt/Info.plist])
+AC_SUBST(MINIUPNPC_CPPFLAGS)
+AC_CONFIG_FILES([Makefile src/Makefile share/setup.nsi share/qt/Info.plist src/test/buildenv.py])
 AC_CONFIG_FILES([qa/pull-tester/run-bitcoind-for-test.sh],[chmod +x qa/pull-tester/run-bitcoind-for-test.sh])
 AC_CONFIG_FILES([qa/pull-tester/build-tests.sh],[chmod +x qa/pull-tester/build-tests.sh])
 AC_OUTPUT

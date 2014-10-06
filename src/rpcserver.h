@@ -4,8 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef _BITCOINRPC_SERVER_H_
-#define _BITCOINRPC_SERVER_H_ 1
+#define _BITCOINRPC_SERVER_H_
 
+#include "amount.h"
 #include "uint256.h"
 #include "rpcprotocol.h"
 
@@ -116,8 +117,8 @@ extern void InitRPCMining();
 extern void ShutdownRPCMining();
 
 extern int64_t nWalletUnlockTime;
-extern int64_t AmountFromValue(const json_spirit::Value& value);
-extern json_spirit::Value ValueFromAmount(int64_t amount);
+extern CAmount AmountFromValue(const json_spirit::Value& value);
+extern json_spirit::Value ValueFromAmount(const CAmount& amount);
 extern double GetDifficulty(const CBlockIndex* blockindex = NULL);
 extern std::string HelpRequiringPassphrase();
 extern std::string HelpExampleCli(std::string methodname, std::string args);
@@ -209,4 +210,4 @@ extern json_spirit::Value gettxout(const json_spirit::Array& params, bool fHelp)
 extern json_spirit::Value verifychain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getchaintips(const json_spirit::Array& params, bool fHelp);
 
-#endif
+#endif // _BITCOINRPC_SERVER_H_

@@ -3,14 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "rpcserver.h"
 #include "chainparams.h"
+#include "core_io.h"
 #include "init.h"
 #include "net.h"
 #include "main.h"
 #include "miner.h"
 #include "pow.h"
-#include "core_io.h"
+#include "rpcserver.h"
 #include "util.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
@@ -273,7 +273,7 @@ Value prioritisetransaction(const Array& params, bool fHelp)
     uint256 hash;
     hash.SetHex(params[0].get_str());
 
-    int64_t nAmount = 0;
+    CAmount nAmount = 0;
     if (params[2].get_real() != 0.0)
         nAmount = AmountFromValue(params[2]);
 
@@ -553,7 +553,7 @@ Value submitblock(const Array& params, bool fHelp)
     try {
         ssBlock >> pblock;
     }
-    catch (std::exception &e) {
+    catch (const std::exception &) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 

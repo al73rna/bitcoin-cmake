@@ -1,15 +1,15 @@
 package=openssl
-$(package)_version=1.0.1h
+$(package)_version=1.0.1i
 $(package)_download_path=https://www.openssl.org/source
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
-$(package)_sha256_hash=9d1c8a9836aa63e2c6adb684186cbd4371c9e9dcc01d6e3bb447abf2d4d3d093
+$(package)_sha256_hash=3c179f46ca77069a6a0bac70212a9b3b838b2f66129cb52d568837fc79d8fcc7
 
 define $(package)_set_vars
 $(package)_config_env=AR="$($(package)_ar)" RANLIB="$($(package)_ranlib)" CC="$($(package)_cc)"
 $(package)_config_opts=--prefix=$(host_prefix) --openssldir=$(host_prefix)/etc/openssl no-zlib no-shared no-dso
 $(package)_config_opts+=no-krb5 no-camellia no-capieng no-cast no-cms no-dtls1 no-gost no-gmp no-heartbeats no-idea no-jpake no-md2
 $(package)_config_opts+=no-mdc2 no-rc5 no-rdrand no-rfc3779 no-rsax no-sctp no-seed no-sha0 no-static_engine no-whirlpool no-rc2 no-rc4 no-ssl3
-$(package)_config_opts+=$($(package)_cflags)
+$(package)_config_opts+=$($(package)_cflags) $($(package)_cppflags)
 $(package)_config_opts_x86_64_linux=-fPIC linux-x86_64
 $(package)_config_opts_arm_linux=-fPIC linux-generic32
 $(package)_config_opts_x86_64_darwin=darwin64-x86_64-cc

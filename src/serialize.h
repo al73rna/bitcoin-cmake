@@ -10,8 +10,8 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <limits>
 #include <ios>
+#include <limits>
 #include <map>
 #include <set>
 #include <stdint.h>
@@ -35,6 +35,14 @@ template<typename T>
 inline T& REF(const T& val)
 {
     return const_cast<T&>(val);
+}
+
+// Used to acquire a non-const pointer "this" to generate bodies
+// of const serialization operations from a template
+template<typename T>
+inline T* NCONST_PTR(const T* val)
+{
+    return const_cast<T*>(val);
 }
 
 /** Get begin pointer of vector (non-const version).
@@ -79,48 +87,26 @@ enum
     SER_GETHASH         = (1 << 2),
 };
 
-#define IMPLEMENT_SERIALIZE(statements)    \
-    unsigned int GetSerializeSize(int nType, int nVersion) const  \
-    {                                           \
-        CSerActionGetSerializeSize ser_action;  \
-        const bool fGetSize = true;             \
-        const bool fWrite = false;              \
-        const bool fRead = false;               \
-        unsigned int nSerSize = 0;              \
-        ser_streamplaceholder s;                \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        s.nType = nType;                        \
-        s.nVersion = nVersion;                  \
-        {statements}                            \
-        return nSerSize;                        \
-    }                                           \
-    template<typename Stream>                   \
-    void Serialize(Stream& s, int nType, int nVersion) const  \
-    {                                           \
-        CSerActionSerialize ser_action;         \
-        const bool fGetSize = false;            \
-        const bool fWrite = true;               \
-        const bool fRead = false;               \
-        unsigned int nSerSize = 0;              \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        {statements}                            \
-    }                                           \
-    template<typename Stream>                   \
-    void Unserialize(Stream& s, int nType, int nVersion)  \
-    {                                           \
-        CSerActionUnserialize ser_action;       \
-        const bool fGetSize = false;            \
-        const bool fWrite = false;              \
-        const bool fRead = true;                \
-        unsigned int nSerSize = 0;              \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        {statements}                            \
+#define READWRITE(obj)      (::SerReadWrite(s, (obj), nType, nVersion, ser_action))
+
+/* Implement three methods for serializable objects. These are actually wrappers over
+ * "SerializationOp" template, which implements the body of each class' serialization
+ * code. Adding "ADD_SERIALIZE_METHODS" in the body of the class causes these wrappers to be
+ * added as members. */
+#define ADD_SERIALIZE_METHODS                                                          \
+    size_t GetSerializeSize(int nType, int nVersion) const {                         \
+        CSizeComputer s(nType, nVersion);                                            \
+        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion);\
+        return s.size();                                                             \
+    }                                                                                \
+    template<typename Stream>                                                        \
+    void Serialize(Stream& s, int nType, int nVersion) const {                       \
+        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion);\
+    }                                                                                \
+    template<typename Stream>                                                        \
+    void Unserialize(Stream& s, int nType, int nVersion) {                           \
+        SerializationOp(s, CSerActionUnserialize(), nType, nVersion);                \
     }
-
-#define READWRITE(obj)      (nSerSize += ::SerReadWrite(s, (obj), nType, nVersion, ser_action))
-
-
-
 
 
 
@@ -259,7 +245,7 @@ uint64_t ReadCompactSize(Stream& is)
         uint64_t xSize;
         READDATA(is, xSize);
         nSizeRet = xSize;
-        if (nSizeRet < 0x100000000LLu)
+        if (nSizeRet < 0x100000000ULL)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
     }
     if (nSizeRet > (uint64_t)MAX_SIZE)
@@ -821,39 +807,28 @@ void Unserialize(Stream& is, std::set<K, Pred, A>& m, int nType, int nVersion)
 
 
 //
-// Support for IMPLEMENT_SERIALIZE and READWRITE macro
+// Support for ADD_SERIALIZE_METHODS and READWRITE macro
 //
-class CSerActionGetSerializeSize { };
-class CSerActionSerialize { };
-class CSerActionUnserialize { };
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionGetSerializeSize ser_action)
+struct CSerActionSerialize
 {
-    return ::GetSerializeSize(obj, nType, nVersion);
-}
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize ser_action)
+    bool ForRead() const { return false; }
+};
+struct CSerActionUnserialize
 {
-    ::Serialize(s, obj, nType, nVersion);
-    return 0;
-}
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize ser_action)
-{
-    ::Unserialize(s, obj, nType, nVersion);
-    return 0;
-}
-
-struct ser_streamplaceholder
-{
-    int nType;
-    int nVersion;
+    bool ForRead() const { return true; }
 };
 
+template<typename Stream, typename T>
+inline void SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize ser_action)
+{
+    ::Serialize(s, obj, nType, nVersion);
+}
 
+template<typename Stream, typename T>
+inline void SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize ser_action)
+{
+    ::Unserialize(s, obj, nType, nVersion);
+}
 
 
 
@@ -946,7 +921,7 @@ public:
         Init(nTypeIn, nVersionIn);
     }
 
-    CDataStream(const std::vector<unsigned char>& vchIn, int nTypeIn, int nVersionIn) : vch((char*)&vchIn.begin()[0], (char*)&vchIn.end()[0])
+    CDataStream(const std::vector<unsigned char>& vchIn, int nTypeIn, int nVersionIn) : vch(vchIn.begin(), vchIn.end())
     {
         Init(nTypeIn, nVersionIn);
     }
@@ -1179,7 +1154,7 @@ public:
 
 
 
-/** RAII wrapper for FILE*.
+/** Non-refcounted RAII wrapper for FILE*
  *
  * Will automatically close the file when it goes out of scope if not null.
  * If you're returning the file pointer, return file.release().
@@ -1187,12 +1162,17 @@ public:
  */
 class CAutoFile
 {
-protected:
-    FILE* file;
-public:
+private:
+    // Disallow copies
+    CAutoFile(const CAutoFile&);
+    CAutoFile& operator=(const CAutoFile&);
+
     int nType;
     int nVersion;
+	
+    FILE* file;	
 
+public:
     CAutoFile(FILE* filenew, int nTypeIn, int nVersionIn)
     {
         file = filenew;
@@ -1207,9 +1187,10 @@ public:
 
     void fclose()
     {
-        if (file != NULL && file != stdin && file != stdout && file != stderr)
+        if (file) {
             ::fclose(file);
-        file = NULL;
+            file = NULL;
+        }
     }
 
     FILE* release()             { FILE* ret = file; file = NULL; return ret; }
@@ -1277,13 +1258,23 @@ public:
     }
 };
 
-/** Wrapper around a FILE* that implements a ring buffer to
- *  deserialize from. It guarantees the ability to rewind
- *  a given number of bytes. */
+/** Non-refcounted RAII wrapper around a FILE* that implements a ring buffer to
+ *  deserialize from. It guarantees the ability to rewind a given number of bytes.
+ *
+ *  Will automatically close the file when it goes out of scope if not null.
+ *  If you need to close the file early, use file.fclose() instead of fclose(file).
+ */
 class CBufferedFile
 {
 private:
-    FILE *src;          // source file
+    // Disallow copies
+    CBufferedFile(const CBufferedFile&);
+    CBufferedFile& operator=(const CBufferedFile&);
+
+    int nType;
+    int nVersion;
+
+    FILE *src;            // source file
     uint64_t nSrcPos;     // how many bytes have been read from source
     uint64_t nReadPos;    // how many bytes have been read from this
     uint64_t nReadLimit;  // up to which position we're allowed to read
@@ -1310,12 +1301,25 @@ protected:
     }
 
 public:
-    int nType;
-    int nVersion;
-
     CBufferedFile(FILE *fileIn, uint64_t nBufSize, uint64_t nRewindIn, int nTypeIn, int nVersionIn) :
-        src(fileIn), nSrcPos(0), nReadPos(0), nReadLimit((uint64_t)(-1)), nRewind(nRewindIn), vchBuf(nBufSize, 0),
-        nType(nTypeIn), nVersion(nVersionIn) {
+        nSrcPos(0), nReadPos(0), nReadLimit((uint64_t)(-1)), nRewind(nRewindIn), vchBuf(nBufSize, 0)
+    {
+        src = fileIn;
+        nType = nTypeIn;
+        nVersion = nVersionIn;
+    }
+
+    ~CBufferedFile()
+    {
+        fclose();
+    }
+
+    void fclose()
+    {
+        if (src) {
+            ::fclose(src);
+            src = NULL;
+        }
     }
 
     // check whether we're at the end of the source file
@@ -1405,4 +1409,4 @@ public:
     }
 };
 
-#endif
+#endif // BITCOIN_SERIALIZE_H
