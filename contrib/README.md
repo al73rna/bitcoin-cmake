@@ -33,6 +33,9 @@ Build Tools and Keys
 Contains files used to package bitcoind/bitcoin-qt
 for Debian-based Linux systems. If you compile bitcoind/bitcoin-qt yourself, there are some useful files here.
 
+### [CMake](/contrib/cmake) ###
+Cross-plattform CMake build system
+
 ### [Gitian-descriptors](/contrib/gitian-descriptors) ###
 Gavin's notes on getting gitian builds up and running using KVM.
 
