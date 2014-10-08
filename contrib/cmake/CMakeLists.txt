@@ -5,7 +5,7 @@ set(MAJOR_VERSION 0)
 set(MINOR_VERSION 9)
 set(REVISION_VERSION 99)
 set(BUILD_VERSION 0)
-set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION})
+set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${REVISION_VERSION}.${BUILD_VERSION})
 
 set(COPYRIGHT_YEAR "2013")
 
@@ -74,6 +74,11 @@ option(USE_UPNP_DEFAULT    "UPnP is enabled on startup" ${MINIUPNP_FOUND})
 option(ENABLE_IPV6         "Enable use of IPv6." ${HAVE_IPV6})
 option(USE_QRCODE          "Enable QR code support" ${QRENCODE_DEPS_FOUND})
 option(USE_DBUS            "Enable DBus support" ${QT_QTDBUS_FOUND})
+option(RPM                 "Build a RPM" OFF)
+option(DEB                 "Build a DEB" OFF)
+set(PACKAGE_CONTACT        ""                         CACHE <TYPE>  "Package Maintainer")
+set(PACKAGE_VENDOR         "Bitcoin Core Developers"  CACHE <TYPE>  "Package Vendor")
+
 
 if(BUILD_VERBOSE)
    set(CMAKE_VERBOSE_MAKEFILE true)
@@ -130,7 +135,11 @@ if(USE_DBUS)
     endif()
 endif()
 
-
+if(RPM OR DEB)
+    if(NOT PACKAGE_CONTACT)
+        message(FATAL_ERROR "Specify a PACKAGE_CONTACT to build packages.")
+    endif()
+endif()
 
 
 #-----------------------------------------------------------------------------
@@ -149,6 +158,8 @@ message(STATUS "Documentation:          ${BUILD_DOCUMENTATION}")
 message(STATUS "Packaging -----------------------------------")
 message(STATUS "Build RPM:              ${RPM}")
 message(STATUS "Build DEB:              ${DEB}")
+message(STATUS "Package Contact:        ${PACKAGE_CONTACT}")
+message(STATUS "Package Vendor:         ${PACKAGE_VENDOR}")
 
 message(STATUS "Build Options -- ----------------------------")
 message(STATUS "Wallet feature:         ${ENABLE_WALLET}")
@@ -326,6 +337,52 @@ if(BUILD_DOCUMENTATION)
                         COMMENT "Bitcoin API documentation via Doxygen" VERBATIM)
     endif()
 endif()
+
+
+#-----------------------------------------------------------------------------
+# Uninstal
+configure_file(
+    "${CONTRIB_CURRENT_SOURCE_DIR}/uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake)
+
+
+#-----------------------------------------------------------------------------
+# Packaging
+set(CPACK_GENERATOR "TGZ")
+
+set(CPACK_PACKAGE_VERSION ${VERSION})
+set(CPACK_PACKAGE_NAME "Bitcoin Core")
+set(CPACK_PACKAGE_CONTACT ${PACKAGE_CONTACT})
+set(CPACK_PACKAGE_VENDOR ${PACKAGE_VENDOR})
+set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}.${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bitcoin is an experimental new digital currency that enables instant payments to anyone, anywhere in the world.")
+set(CPACK_PACKAGE_DESCRIPTION "
+Bitcoin is an experimental new digital currency that enables instant payments to anyone, anywhere in the world. Bitcoin uses peer-to-peer technology to operate with no central authority: managing transactions and issuing money are carried out collectively by the network.
+")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+set(WEBSITE "https://www.bitcoin.org/")
+
+if(RPM)
+  set(CPACK_GENERATOR "RPM")
+  set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+#  set(CPACK_RPM_CHANGELOG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ChangeLog")
+endif(RPM)
+
+if(DEB)
+  set(CPACK_GENERATOR "DEB")
+  #set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
+  set(CPACK_DEBIAN_PACKAGE_PRIORITY "extra")
+  set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+  set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${WEBSITE})
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER ${PACKAGE_CONTACT})
+endif(DEB)
+
+include(CPack)
 
 
 #-----------------------------------------------------------------------------
