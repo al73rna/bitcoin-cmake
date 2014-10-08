@@ -13,6 +13,7 @@ set(LIB_HEADERS
     base58.h
     coins.h
     bloom.h
+    chain.h
     chainparams.h
     chainparamsbase.h
     chainparamsseeds.h
@@ -46,7 +47,12 @@ set(LIB_HEADERS
     rpcclient.h
     rpcprotocol.h
     rpcserver.h
-    script.h
+    script/script.h
+    script/compressor.h
+    script/interpreter.h
+    script/sigcache.h
+    script/sign.h
+    script/standard.h
     serialize.h
     sync.h
     threadsafety.h
@@ -73,6 +79,7 @@ set(LIB_SOURCES
     allocators.cpp
     base58.cpp
     bloom.cpp
+    chain.cpp
     chainparamsbase.cpp
     chainparams.cpp
     checkpoints.cpp
@@ -110,7 +117,12 @@ set(LIB_SOURCES
     rpcrawtransaction.cpp
     rpcserver.cpp
     rpcwallet.cpp
-    script.cpp
+    script/script.cpp
+    script/compressor.cpp
+    script/interpreter.cpp
+    script/sigcache.cpp
+    script/sign.cpp
+    script/standard.cpp
     sync.cpp
     timedata.cpp
     txdb.cpp
@@ -127,6 +139,7 @@ set(LIB_SOURCES
     version.cpp
     wallet.cpp
     walletdb.cpp
+    wallet_ismine.cpp
     )
 
 if(GLIBC_BACK_COMPAT)

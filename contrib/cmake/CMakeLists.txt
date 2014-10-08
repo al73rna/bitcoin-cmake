@@ -46,6 +46,7 @@ else()
     set(HAVE_BITCOINQT_DEPS FALSE)
 endif()
 
+# TODO: autotools added -DMINIUPNP_STATICLIB support.
 find_package(Miniupnpc)
 
 # Check if struct sockaddr_in6 contains sin6
