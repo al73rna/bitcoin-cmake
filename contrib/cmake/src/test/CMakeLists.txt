@@ -14,6 +14,7 @@ set(TEST_SOURCES
     bip32_tests.cpp
     bloom_tests.cpp
     #canonical_tests.cpp
+    coins_tests.cpp
     checkblock_tests.cpp
     Checkpoints_tests.cpp
     compress_tests.cpp
