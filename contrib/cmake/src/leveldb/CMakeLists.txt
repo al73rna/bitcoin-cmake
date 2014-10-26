@@ -47,6 +47,7 @@ set(SOURCES
     db/dbformat.cc
     db/db_impl.cc
     db/db_iter.cc
+    db/dumpfile.cc
     db/filename.cc
     db/leveldb_main.cc
     db/log_reader.cc

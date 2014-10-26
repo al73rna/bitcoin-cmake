@@ -25,7 +25,6 @@ set(LIB_HEADERS
     guiconstants.h
     guiutil.h
     intro.h
-    monitoreddatamapper.h
     networkstyle.h
     notificator.h
     openuridialog.h
@@ -76,7 +75,6 @@ set(LIB_SOURCES
     editaddressdialog.cpp
     guiutil.cpp
     intro.cpp
-    monitoreddatamapper.cpp
     networkstyle.cpp
     notificator.cpp
     openuridialog.cpp
