@@ -4,9 +4,11 @@
 
 #include "core_io.h"
 
-#include "core.h"
+#include "core/block.h"
+#include "core/transaction.h"
 #include "script/script.h"
 #include "serialize.h"
+#include "streams.h"
 #include "univalue/univalue.h"
 #include "util.h"
 #include "utilstrencodings.h"
@@ -99,6 +101,23 @@ bool DecodeHexTx(CTransaction& tx, const std::string& strHexTx)
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
     try {
         ssData >> tx;
+    }
+    catch (const std::exception &) {
+        return false;
+    }
+
+    return true;
+}
+
+bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
+{
+    if (!IsHex(strHexBlk))
+        return false;
+
+    std::vector<unsigned char> blockData(ParseHex(strHexBlk));
+    CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
+    try {
+        ssBlock >> block;
     }
     catch (const std::exception &) {
         return false;
