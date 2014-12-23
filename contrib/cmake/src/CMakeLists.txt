@@ -25,8 +25,8 @@ set(LIB_HEADERS
     compat/sanity.h
     compressor.h
     core_io.h
-    core/block.h
-    core/transaction.h
+    primitives/block.h
+    primitives/transaction.h
     crypter.h
     crypto/common.h
     crypto/hmac_sha256.h
@@ -46,6 +46,7 @@ set(LIB_HEADERS
     leveldbwrapper.h
     limitedmap.h
     main.h
+    merkleblock.h
     miner.h
     mruset.h
     netbase.h
@@ -104,8 +105,8 @@ set(LIB_SOURCES
     compressor.cpp
     core_read.cpp
     core_write.cpp
-    core/block.cpp
-    core/transaction.cpp
+    primitives/block.cpp
+    primitives/transaction.cpp
     crypter.cpp
     crypto/hmac_sha256.cpp
     crypto/hmac_sha512.cpp
@@ -123,6 +124,7 @@ set(LIB_SOURCES
     keystore.cpp
     leveldbwrapper.cpp
     main.cpp
+    merkleblock.cpp
     miner.cpp
     netbase.cpp
     net.cpp
@@ -174,10 +176,9 @@ if(GLIBC_BACK_COMPAT)
 endif()
 
 if(USE_ASM)
+    # This should never be reached. It's disabled in ../CMakeLists.txt
     set(can_use_assembler FALSE)
     set(LIB_SOURCES ${LIB_SOURCES} secp256k1/src/field_5x52_asm.asm)
-    # list append not working...
-    #list(APPEND ${LIB_SOURCES} secp256k1/src/field_5x52_asm.asm) 
 endif()
 
 set(DIR_SOURCES)
@@ -207,6 +208,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/config
                     ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1/include
                     )
 
+# TODO: autotools splits this into:
+#      libbitcoin
+#      libbitcoinconsensus
+#      libsecp256k1
 add_library(bitcoin ${DIR_HEADERS} ${DIR_SOURCES})
 target_link_libraries(bitcoin leveldb
                       ${CMAKE_THREAD_LIBS_INIT}
