@@ -39,7 +39,7 @@ if (NOT BDB_LIBRARY_DIR)
 endif (NOT BDB_LIBRARY_DIR)
 find_library(
   BDB_LIBRARY
-  NAMES db_cxx libdb48
+  NAMES db_cxx-4.8 libdb48 db_cxx
   PATHS ${BDB_LIBRARY_DIR}
   DOC "Libraries to link against for the common parts of BDB")
 

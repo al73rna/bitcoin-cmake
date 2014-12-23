@@ -169,7 +169,15 @@ set(LIB_SOURCES
     )
 
 if(GLIBC_BACK_COMPAT)
-    list(APPEND ${LIB_SOURCES} compat/glibc_compat.cpp compat/glibcxx_compat.cpp)
+    #list(APPEND ${LIB_SOURCES} compat/glibc_compat.cpp compat/glibcxx_compat.cpp)
+    set(LIB_SOURCES ${LIB_SOURCES} compat/glibc_compat.cpp compat/glibcxx_compat.cpp)
+endif()
+
+if(USE_ASM)
+    set(can_use_assembler FALSE)
+    set(LIB_SOURCES ${LIB_SOURCES} secp256k1/src/field_5x52_asm.asm)
+    # list append not working...
+    #list(APPEND ${LIB_SOURCES} secp256k1/src/field_5x52_asm.asm) 
 endif()
 
 set(DIR_SOURCES)

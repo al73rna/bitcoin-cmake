@@ -93,13 +93,17 @@ set(PACKAGE_VENDOR         "Bitcoin Core Developers"  CACHE <TYPE>  "Package Ven
 
 # ripped from lclc's secp256k1 CMakeLists: 
 # https://github.com/lclc/secp256k1-cmake
-option(ENDOMORPHISM "Enable endomorphism." OFF)
+option(SECP_ENDOMORPHISM "Enable secp256k1 Endomorphism." OFF)
 
 # hardcoding to failsafe gmp for now
-set(USE_GMP 1)
-#set(FIELD "gmp" CACHE <TYPE> "Field operations: gmp|64bit|64bit_asm|32bit")
-#set(BIGNUM "gmp" CACHE <TYPE> "Bignum Implementation: gmp|openssl")
-set(SCALAR "4x64" CACHE <TYPE> "secp256k1 Scalar Implementation: 4x64|8x32")
+set(SECP_FIELD "gmp" CACHE STRING "secp256k1 Field operations: gmp|64bit|64bit_asm|32bit")
+set(SECP_BIGNUM "gmp" CACHE STRING "secp256k1 Bignum Implementation: gmp|openssl")
+set(SECP_SCALAR "4x64" CACHE STRING "secp256k1 Scalar Implementation: 4x64|8x32")
+
+# Make SECP options combobox when cmake-gui is available
+set_property(CACHE SECP_FIELD PROPERTY STRINGS "gmp" "64bit" "64bit_asm" "32bit")
+set_property(CACHE SECP_BIGNUM PROPERTY STRINGS "gmp" "openssl")
+set_property(CACHE SECP_SCALAR PROPERTY STRINGS "4x64" "8x32")
 
 if(BUILD_VERBOSE)
    set(CMAKE_VERBOSE_MAKEFILE true)
@@ -192,10 +196,10 @@ message(STATUS "QR code:                ${USE_QRCODE}")
 message(STATUS "DBUS:                   ${USE_DBUS}")
 
 message(STATUS "SECP256k1 Options ---------------------------")
-message(STATUS "Endomorphism: ${ENDOMORPHISM}")
-message(STATUS "Field operations: ${FIELD}")
-message(STATUS "Bignum Implementation: ${BIGNUM}")
-message(STATUS "Scalar Implementation: ${SCALAR}")
+message(STATUS "Endomorphism: ${SECP_ENDOMORPHISM}")
+message(STATUS "Field operations: ${SECP_FIELD}")
+message(STATUS "Bignum Implementation: ${SECP_BIGNUM}")
+message(STATUS "Scalar Implementation: ${SECP_SCALAR}")
 
 message(STATUS "Backwards compatibility with glibc and libstdc++: ${GLIBC_BACK_COMPAT}")
 
@@ -252,48 +256,57 @@ endif()
 #-----------------------------------------------------------------------------
 # secp256k1 preprocessor definitions.  Taken from lclc's CMakeLists.txt:
 # https://github.com/lclc/secp256k1-cmake
-if(ENDOMORPHISM)
+
+if(SECP_ENDOMORPHISM)
     add_definitions(-DUSE_ENDOMORPHISM)
 endif()
 
-#if(FIELD MATCHES 64bit_asm)
-#    if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
-#        message(FATAL_ERROR "64bit_asm field support explicitly requested but is not compatible with this host.")
-#    else()
-#        enable_language(ASM_NASM)
-#        if("ASM${ASM_DIALECT}" STREQUAL "YASM")
-#            add_definitions(-DUSE_FIELD_5X52)
-#            add_definitions(-DUSE_FIELD_5X52_ASM)
-#            set(USE_ASM 1)
-#        else()
-#            message(FATAL_ERROR "64bit_asm field support explicitly requested but yasm was not found.")
-#        endif()
-#    endif()
-#elseif(FIELD MATCHES gmp) #default
-#    set(USE_GMP 1)
-#    add_definitions(-DUSE_FIELD_GMP)
-#    add_definitions(-DHAVE_LIBGMP)
-#elseif(FIELD MATCHES 64bit)
-#    add_definitions(-DUSE_FIELD_5X52)
-#    add_definitions(-DUSE_FIELD_5X52_INT128)
-#elseif(FIELD MATCHES 32bit)
-#    add_definitions(-DUSE_FIELD_10X26)
-#else()
-#    message(FATAL_ERROR "Invalid field implementation.")
-#endif()
-#if(BIGNUM MATCHES gmp) #default
-#    set(USE_GMP 1)
-#    add_definitions(-DHAVE_LIBGMP)
-#    add_definitions(-DUSE_NUM_GMP)
-#    add_definitions(-DUSE_FIELD_INV_NUM)
-#elseif(BIGNUM MATCHES openssl)
-#    find_package(OpenSSL REQUIRED)
-#    set(USE_SSL 1)
-#    add_definitions(-DUSE_NUM_OPENSSL)
-#    add_definitions(-DUSE_FIELD_INV_BUILTIN)
-#else()
-#    message(FATAL_ERROR "Invalid field implementation.")
-#endif()
+if(SECP_FIELD MATCHES 64bit_asm)
+    if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
+        message(FATAL_ERROR "64bit_asm field support explicitly requested but is not compatible with this host.")
+    else()
+        enable_language(ASM_NASM)
+        #if("ASM${ASM_DIALECT}" STREQUAL "YASM")
+            add_definitions(-DUSE_FIELD_5X52)
+            add_definitions(-DUSE_FIELD_5X52_ASM)
+            set(USE_ASM 1)
+        #else()
+        #    message(FATAL_ERROR "64bit_asm field support explicitly requested but yasm was not found.")
+        #endif()
+    endif()
+elseif(SECP_FIELD MATCHES gmp) #default
+    set(USE_GMP 1)
+    add_definitions(-DUSE_FIELD_GMP)
+    add_definitions(-DHAVE_LIBGMP)
+elseif(SECP_FIELD MATCHES 64bit)
+    add_definitions(-DUSE_FIELD_5X52)
+    add_definitions(-DUSE_FIELD_5X52_INT128)
+elseif(SECP_FIELD MATCHES 32bit)
+    add_definitions(-DUSE_FIELD_10X26)
+else()
+    message(FATAL_ERROR "Invalid SECP Field implementation.")
+endif()
+
+if(SECP_BIGNUM MATCHES gmp) #default
+    set(USE_GMP 1)
+    add_definitions(-DHAVE_LIBGMP)
+    add_definitions(-DUSE_NUM_GMP)
+    add_definitions(-DUSE_FIELD_INV_NUM)
+elseif(SECP_BIGNUM MATCHES openssl)
+    #find_package(OpenSSL REQUIRED) # OpenSSL always required in bitcoin core
+    set(USE_SSL 1)
+    add_definitions(-DUSE_NUM_OPENSSL)
+    add_definitions(-DUSE_FIELD_INV_BUILTIN)
+else()
+    message(FATAL_ERROR "Invalid SECP Bignum implementation.")
+endif()
+
+if(SECP_SCALAR MATCHES 8x32)
+    add_definitions(-DUSE_SCALAR_8X32)
+else()
+    add_definitions(-DUSE_SCALAR_4X64) # arbitrary default
+endif()
+
 if(USE_GMP)
     find_path(GMP_INCLUDE_DIR gmp.h)
     if(GMP_INCLUDE_DIR STREQUAL "GMP_INCLUDE_DIR-NOTFOUND")
@@ -301,15 +314,6 @@ if(USE_GMP)
     else()
         message(STATUS "Found GMP: ${GMP_INCLUDE_DIR}")
     endif()
-    add_definitions(-DUSE_FIELD_GMP)
-    add_definitions(-DUSE_FIELD_INV_BUILTIN) # arbitrary decision
-    add_definitions(-DUSE_NUM_GMP)
-    add_definitions(-DHAVE_LIBGMP)
-endif()
-if(SCALAR MATCHES 8x32)
-    add_definitions(-DUSE_SCALAR_8X32)
-else()
-    add_definitions(-DUSE_SCALAR_4X64) # arbitrary default
 endif()
 
 

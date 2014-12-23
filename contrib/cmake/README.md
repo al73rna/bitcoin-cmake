@@ -50,7 +50,8 @@ mkdir build && cd build && cmake ../contrib/cmake && make -j2
 5. Select 'g' to generate or click the Generate button.
 
 6. Initiate 'make' or start your IDE of choice using generated project files:
-    $ make
+    $ make help # list available targets to compile
+    $ make      # build everything
 
 7. Libraries and executables are placed wrt build directory in: 'lib' and 'bin'.
 
