@@ -1,7 +1,7 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 9)
+define(_CLIENT_VERSION_MINOR, 10)
 define(_CLIENT_VERSION_REVISION, 99)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, false)
@@ -244,8 +244,12 @@ case $host in
        AC_CHECK_PROG([PORT],port, port)
        if test x$PORT = xport; then
          dnl add default macports paths
-         CPPFLAGS="$CPPFLAGS -isystem /opt/local/include -I/opt/local/include/db48"
-         LIBS="$LIBS -L/opt/local/lib -L/opt/local/lib/db48"
+         CPPFLAGS="$CPPFLAGS -isystem /opt/local/include"
+         LIBS="$LIBS -L/opt/local/lib"
+         if test -d /opt/local/include/db48; then
+           CPPFLAGS="$CPPFLAGS -I/opt/local/include/db48"
+           LIBS="$LIBS -L/opt/local/lib/db48"
+         fi
        fi
 
        AC_CHECK_PROG([BREW],brew, brew)
@@ -688,6 +692,7 @@ AC_MSG_CHECKING([whether to build libraries])
 AM_CONDITIONAL([BUILD_BITCOIN_LIBS], [test x$build_bitcoin_libs = xyes])
 if test x$build_bitcoin_libs = xyes; then
   AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
+  AC_CONFIG_FILES([libbitcoinconsensus.pc:libbitcoinconsensus.pc.in])
 fi
 AC_MSG_RESULT($build_bitcoin_libs)
 
