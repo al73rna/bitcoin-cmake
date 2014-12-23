@@ -23,14 +23,22 @@ set(LIB_HEADERS
     coincontrol.h
     compat.h
     compat/sanity.h
-    core.h
+    compressor.h
     core_io.h
+    core/block.h
+    core/transaction.h
     crypter.h
     crypto/common.h
+    crypto/hmac_sha256.h
+    crypto/hmac_sha512.h
+    crypto/rfc6979_hmac_sha256.h
     crypto/ripemd160.h
     crypto/sha1.h
-    crypto/sha2.h
+    crypto/sha256.h
+    crypto/sha512.h
     db.h
+    eccryptoverify.h
+    ecwrapper.h
     hash.h
     init.h
     key.h
@@ -44,16 +52,20 @@ set(LIB_HEADERS
     net.h
     pow.h
     protocol.h
+    pubkey.h
     rpcclient.h
     rpcprotocol.h
     rpcserver.h
-    script/script.h
-    script/compressor.h
+    script/bitcoinconsensus.h
     script/interpreter.h
+    script/script.h
+    script/script_error.h
     script/sigcache.h
     script/sign.h
     script/standard.h
+    secp256k1/include/secp256k1.h
     serialize.h
+    streams.h
     sync.h
     threadsafety.h
     timedata.h
@@ -75,6 +87,7 @@ set(LIB_HEADERS
 
 set(LIB_SOURCES
     addrman.cpp
+    amount.cpp
     alert.cpp
     allocators.cpp
     base58.cpp
@@ -83,17 +96,27 @@ set(LIB_SOURCES
     chainparamsbase.cpp
     chainparams.cpp
     checkpoints.cpp
+    clientversion.cpp
     coins.cpp
     compat/glibc_sanity.cpp
     compat/glibcxx_sanity.cpp
-    core.cpp
+    compat/strnlen.cpp
+    compressor.cpp
     core_read.cpp
     core_write.cpp
+    core/block.cpp
+    core/transaction.cpp
     crypter.cpp
+    crypto/hmac_sha256.cpp
+    crypto/hmac_sha512.cpp
+    crypto/rfc6979_hmac_sha256.cpp
     crypto/ripemd160.cpp
     crypto/sha1.cpp
-    crypto/sha2.cpp
+    crypto/sha256.cpp
+    crypto/sha512.cpp
     db.cpp
+    eccryptoverify.cpp
+    ecwrapper.cpp
     hash.cpp
     init.cpp
     key.cpp
@@ -106,7 +129,9 @@ set(LIB_SOURCES
     noui.cpp
     pow.cpp
     protocol.cpp
+    pubkey.cpp
     random.cpp
+    rest.cpp
     rpcblockchain.cpp
     rpcclient.cpp
     rpcdump.cpp
@@ -117,12 +142,14 @@ set(LIB_SOURCES
     rpcrawtransaction.cpp
     rpcserver.cpp
     rpcwallet.cpp
-    script/script.cpp
-    script/compressor.cpp
+    script/bitcoinconsensus.cpp
     script/interpreter.cpp
+    script/script.cpp
+    script/script_error.cpp
     script/sigcache.cpp
     script/sign.cpp
     script/standard.cpp
+    secp256k1/src/secp256k1.c
     sync.cpp
     timedata.cpp
     txdb.cpp
@@ -136,7 +163,6 @@ set(LIB_SOURCES
     utilmoneystr.cpp
     utilstrencodings.cpp
     utiltime.cpp
-    version.cpp
     wallet.cpp
     walletdb.cpp
     wallet_ismine.cpp
@@ -169,6 +195,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/config
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers/memenv
+                    ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1
+                    ${CMAKE_CURRENT_SOURCE_DIR}/secp256k1/include
                     )
 
 add_library(bitcoin ${DIR_HEADERS} ${DIR_SOURCES})
@@ -178,6 +206,10 @@ target_link_libraries(bitcoin leveldb
                       ${Boost_LIBRARIES}
                       ${OPENSSL_LIBRARIES}
                      )
+
+if(USE_GMP)
+    target_link_libraries(bitcoin gmp)
+endif()
 
 if(USE_UPNP)
     include_directories(${MINIUPNP_INCLUDE_DIR})

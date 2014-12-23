@@ -21,6 +21,9 @@ string(REGEX REPLACE "/contrib/cmake" "" CMAKE_CURRENT_SOURCE_DIR
        ${CMAKE_CURRENT_SOURCE_DIR})
 
 
+# secp256k1 requires c99 for in-for-loop variable declarations.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+
 #-----------------------------------------------------------------------------
 # Third party libraries
 
@@ -53,6 +56,15 @@ find_package(Miniupnpc)
 include(CheckStructHasMember)
 CHECK_STRUCT_HAS_MEMBER("struct sockaddr_in6" sin6_addr netinet/in.h HAVE_IPV6)
 
+# src/compat.h and src/compat/strnlen.cpp need HAVE_DECL_STRNLEN:
+include(CheckFunctionExists)
+CHECK_FUNCTION_EXISTS(strnlen HAVE_STRNLEN)
+if(HAVE_STRNLEN)
+    add_definitions(-DHAVE_DECL_STRNLEN=1)
+else()
+    add_definitions(-DHAVE_DECL_STRNLEN=0)
+endif()
+
 if(BUILD_QT AND QRENCODE_FOUND)
     set(QRENCODE_DEPS_FOUND TRUE)
 else()
@@ -79,6 +91,15 @@ option(DEB                 "Build a DEB" OFF)
 set(PACKAGE_CONTACT        ""                         CACHE <TYPE>  "Package Maintainer")
 set(PACKAGE_VENDOR         "Bitcoin Core Developers"  CACHE <TYPE>  "Package Vendor")
 
+# ripped from lclc's secp256k1 CMakeLists: 
+# https://github.com/lclc/secp256k1-cmake
+option(ENDOMORPHISM "Enable endomorphism." OFF)
+
+# hardcoding to failsafe gmp for now
+set(USE_GMP 1)
+#set(FIELD "gmp" CACHE <TYPE> "Field operations: gmp|64bit|64bit_asm|32bit")
+#set(BIGNUM "gmp" CACHE <TYPE> "Bignum Implementation: gmp|openssl")
+set(SCALAR "4x64" CACHE <TYPE> "secp256k1 Scalar Implementation: 4x64|8x32")
 
 if(BUILD_VERBOSE)
    set(CMAKE_VERBOSE_MAKEFILE true)
@@ -170,6 +191,12 @@ message(STATUS "IPv6:                   ${ENABLE_IPV6}")
 message(STATUS "QR code:                ${USE_QRCODE}")
 message(STATUS "DBUS:                   ${USE_DBUS}")
 
+message(STATUS "SECP256k1 Options ---------------------------")
+message(STATUS "Endomorphism: ${ENDOMORPHISM}")
+message(STATUS "Field operations: ${FIELD}")
+message(STATUS "Bignum Implementation: ${BIGNUM}")
+message(STATUS "Scalar Implementation: ${SCALAR}")
+
 message(STATUS "Backwards compatibility with glibc and libstdc++: ${GLIBC_BACK_COMPAT}")
 
 
@@ -221,6 +248,70 @@ endif()
 if(USE_DBUS)
     add_definitions(-DUSE_DBUS)
 endif()
+
+#-----------------------------------------------------------------------------
+# secp256k1 preprocessor definitions.  Taken from lclc's CMakeLists.txt:
+# https://github.com/lclc/secp256k1-cmake
+if(ENDOMORPHISM)
+    add_definitions(-DUSE_ENDOMORPHISM)
+endif()
+
+#if(FIELD MATCHES 64bit_asm)
+#    if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
+#        message(FATAL_ERROR "64bit_asm field support explicitly requested but is not compatible with this host.")
+#    else()
+#        enable_language(ASM_NASM)
+#        if("ASM${ASM_DIALECT}" STREQUAL "YASM")
+#            add_definitions(-DUSE_FIELD_5X52)
+#            add_definitions(-DUSE_FIELD_5X52_ASM)
+#            set(USE_ASM 1)
+#        else()
+#            message(FATAL_ERROR "64bit_asm field support explicitly requested but yasm was not found.")
+#        endif()
+#    endif()
+#elseif(FIELD MATCHES gmp) #default
+#    set(USE_GMP 1)
+#    add_definitions(-DUSE_FIELD_GMP)
+#    add_definitions(-DHAVE_LIBGMP)
+#elseif(FIELD MATCHES 64bit)
+#    add_definitions(-DUSE_FIELD_5X52)
+#    add_definitions(-DUSE_FIELD_5X52_INT128)
+#elseif(FIELD MATCHES 32bit)
+#    add_definitions(-DUSE_FIELD_10X26)
+#else()
+#    message(FATAL_ERROR "Invalid field implementation.")
+#endif()
+#if(BIGNUM MATCHES gmp) #default
+#    set(USE_GMP 1)
+#    add_definitions(-DHAVE_LIBGMP)
+#    add_definitions(-DUSE_NUM_GMP)
+#    add_definitions(-DUSE_FIELD_INV_NUM)
+#elseif(BIGNUM MATCHES openssl)
+#    find_package(OpenSSL REQUIRED)
+#    set(USE_SSL 1)
+#    add_definitions(-DUSE_NUM_OPENSSL)
+#    add_definitions(-DUSE_FIELD_INV_BUILTIN)
+#else()
+#    message(FATAL_ERROR "Invalid field implementation.")
+#endif()
+if(USE_GMP)
+    find_path(GMP_INCLUDE_DIR gmp.h)
+    if(GMP_INCLUDE_DIR STREQUAL "GMP_INCLUDE_DIR-NOTFOUND")
+        message(FATAL_ERROR "Couldn't find gmp.h. Please install GMP.")
+    else()
+        message(STATUS "Found GMP: ${GMP_INCLUDE_DIR}")
+    endif()
+    add_definitions(-DUSE_FIELD_GMP)
+    add_definitions(-DUSE_FIELD_INV_BUILTIN) # arbitrary decision
+    add_definitions(-DUSE_NUM_GMP)
+    add_definitions(-DHAVE_LIBGMP)
+endif()
+if(SCALAR MATCHES 8x32)
+    add_definitions(-DUSE_SCALAR_8X32)
+else()
+    add_definitions(-DUSE_SCALAR_4X64) # arbitrary default
+endif()
+
 
 
 # This is probably a hack to get PRId64 defines from <inttypes.h> which
