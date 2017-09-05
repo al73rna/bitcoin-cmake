@@ -9,6 +9,7 @@ set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${REVISION_VERSION}.${BUILD_VERSIO
 
 set(COPYRIGHT_YEAR "2013")
 
+add_definitions(-DOS_MACOSX)
 
 # Save current directory path of this CMakeLists.txt into CONTRIB_SOURCE_DIR 
 # and overwrite CMAKE_*_SOURCE_DIR with the path to the actual source. This 
@@ -37,6 +38,9 @@ find_package(Boost 1.45.0 COMPONENTS system filesystem thread program_options RE
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF)
+
+message("当前变量是：${OPENSSL_INCLUDE_DIR}")
+message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 
 # bitcoin-qt dependencies (4.4.3 arbitrarily set via docs):
 find_package(Qt4 4.4.3 COMPONENTS QtCore QtGui QtNetwork QtDbus)
@@ -372,8 +376,8 @@ if(UNIX)
     option(ENABLE_HARDENING "Attempt to harden the resulting executables (default is yes)" ON)
     set(HARDENED_CXXFLAGS "-Wstack-protector -fPIE" CACHE STRING "")
     set(HARDENED_CPPFLAGS "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2" CACHE STRING "")
-    set(HARDENED_LDFLAGS "-Wl,-z,relro" CACHE STRING "")
-    set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -Wl,-z,now" CACHE STRING "")
+#    set(HARDENED_LDFLAGS "-Wl,-z,relro" CACHE STRING "")
+#    set(HARDENED_LDFLAGS "${HARDENED_LDFLAGS} -Wl,-z,now" CACHE STRING "")
 
     set(CMAKE_REQUIRED_FLAGS "-Wl,--dynamicbase")
     CHECK_C_COMPILER_FLAG("" LINK_DYNAMIC_BASE)

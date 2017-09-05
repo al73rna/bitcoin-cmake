@@ -199,7 +199,7 @@ add_definitions( "-DHAS_BOOST -DHAVE_WORKING_BOOST_SLEEP" )
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/config
                     ${BDB_INCLUDE}
                     ${Boost_INCLUDE_DIRS}
-                    ${OPENSSL_INCLUDE_DIRS}
+                    ${OPENSSL_INCLUDE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/include
                     ${CMAKE_CURRENT_SOURCE_DIR}/leveldb/helpers
@@ -218,6 +218,7 @@ target_link_libraries(bitcoin leveldb
                       ${BDB_LIBRARY}
                       ${Boost_LIBRARIES}
                       ${OPENSSL_LIBRARIES}
+        -L/usr/local/lib/
                      )
 
 if(USE_GMP)
